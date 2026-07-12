@@ -10,6 +10,7 @@ version = "0.1.0"
 [tasks]
 metrics-test = "python -m tests.test_metrics"
 etnf-test = "python -m tests.test_etnf"
+uro-test = "python -m tests.test_uro"
 phase1 = "python -m vsk_recsys.train.phase1_movielens"
 
 [dependencies]
