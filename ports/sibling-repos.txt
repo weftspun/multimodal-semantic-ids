@@ -1,0 +1,4 @@
+# mount_drift/ports — sibling repos to clone side-by-side in ~/.
+#
+# build (link): none — self-contained (owns vkc + volk + its imu_types).
+# exposes: vkc_core (the Vulkan compute host) — borrowed by the solve cluster.
