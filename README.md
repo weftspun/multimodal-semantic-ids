@@ -25,5 +25,6 @@ python -m tests.test_etnf && python -m tests.test_metrics
 ## Status
 
 - **Phase 0** — decision records, `CITATION.cff`, pixi env, package scaffold, metrics/keys tests. ✔
-- **Phase 1** — MovieLens parity (FSQ + Transformer vs PinSage baseline). ▢ in progress
+- **Phase 1** — MovieLens parity (FSQ + Transformer), GPU. ✔ ml-1m Recall@10=0.045 / MRR@10=0.016
+  vs most-popular 0.016 / 0.006 (~2.8×); semantic-ID collisions ≈ 0.0003
 - **Phase 2** — Godot multimodal encoders + ETNF store + cold-start validation. ▢

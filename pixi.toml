@@ -21,7 +21,8 @@ duckdb = ">=1.1"
 
 [pypi-dependencies]
 # Phase 1 (MovieLens parity) — all FOSS Apache-2.0 / MIT
-torch = ">=2.5.1"
+# CUDA build (RTX 4090, sm_89); driver supports CUDA 13.1 (backward-compat with cu12x).
+torch = { version = ">=2.5.1", index = "https://download.pytorch.org/whl/cu128" }
 vector-quantize-pytorch = "*"   # MIT — ResidualFSQ semantic IDs
 sentence-transformers = "*"     # ModernBERT text encoder
 einops = "*"

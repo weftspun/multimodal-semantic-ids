@@ -42,7 +42,8 @@ class SemanticIDDecoder(nn.Module):
         self.V = codebook_size
         self.Q = num_slots
         self.max_items = max_items
-        self.max_tokens = max_items * num_slots + 1  # + BOS
+        # room for the truncated history (<= max_items items) + the item being generated + BOS
+        self.max_tokens = (max_items + 1) * num_slots + 1
         self.n_codes = self.Q * self.V
         self.BOS = self.n_codes
         self.PAD = self.n_codes + 1
