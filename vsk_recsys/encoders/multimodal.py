@@ -45,3 +45,18 @@ class Qwen3VLEncoder:
             show_progress_bar=True,
             prompt=prompt,
         )
+
+    def encode_images(self, images, batch_size: int = 8, normalize: bool = True):
+        """List[PIL.Image] -> np.ndarray (n, dim), in the SAME shared space as ``encode`` (text).
+
+        The Qwen3-VL processor consumes PIL images directly; text and image embeddings are directly
+        comparable (that is the whole point of the unified encoder). Renders come from the viser pipeline
+        (``vsk_recsys/encoders/render.py``).
+        """
+        return self.model.encode(
+            list(images),
+            batch_size=batch_size,
+            normalize_embeddings=normalize,
+            convert_to_numpy=True,
+            show_progress_bar=True,
+        )
