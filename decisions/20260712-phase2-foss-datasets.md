@@ -28,7 +28,8 @@ against the HF API on 2026-07-12; only OSI/permissive or CC-BY/CC0/ODC-BY qualif
 | **Text** (Godot scenes+scripts) — PRIMARY | `godotengine/godot-demo-projects` (git, MIT) | **MIT** | Real scene-graph text: **394 `.tscn` + 458 `.gd` + 137 `.tres` + 46 `.gdshader` across 138 projects** (9.1k★). Single clean source; closest public analog to V-Sekai assets. **Scenes are the items; each project is a session** (see Consequences). GDScript-only supplements exist (`icici121/godot-gdscript-dataset`, Apache-2.0) but are not needed. |
 | **Audio**                 | `agkphysics/AudioSet`                                       | **CC-BY-4.0** | For the LAION-CLAP audio encoder.                                  |
 | Audio (Freesound/LAION)   | `benjamin-paine/freesound-laion-640k-commercial-16khz-full` | **CC-BY-4.0** | Commercial-safe Freesound/LAION-audio.                             |
-| **Body / phenotype**      | `nadizik/synthetic-human-expressions-poses-3d`              | **CC-BY-4.0** | Synthetic 3D human poses → rf-detr keypoints → ANNY fit.           |
+| **Phenotype: facial expression** | `nadizik/synthetic-human-expressions-poses-3d`      | **CC-BY-4.0** | Synthetic human **facial-expression** renders (FACS controls + camera + breathing + eye-gaze) — **NOT body skeleton**. Ingested to ETNF: `assets_poses` + `asset_pose_meta` (`vsk_recsys/data/nadizik.py`; 10,075 renders, 26 motions, 4 quality buckets). rf-detr keypoints run on these renders. |
+| **Phenotype: body motion** (NEEDED, TBD) | *unsourced — FOSS, non-SMPL*                | *TBD*         | Full-**body skeleton** motion/poses for the COCO-17 → `somaxc` → ANNY *body* retarget. The facial set does not cover the body skeleton, so a separate body-motion source is required. Must clear the FOSS gate: avoid SMPL/SMPL-X-derived (AMASS, BEDLAM, AGORA are non-commercial/gated) and AGPL (YOLO-pose). Options: **generate from ANNY/somaxc** (the closed loop — pose ANNY → render → rf-detr COCO-17 → retarget), or a CC-BY/CC0 synthetic body-pose set. |
 
 **Rejected (not FOSS):** `ShapeNet/ShapeNetCore` (license "other", gated/manual); `laion/relaion2B-en-
 research-safe` and `laion/laion2B-en-aesthetic` (license unknown — URL lists with mixed image rights);
@@ -58,4 +59,9 @@ prefer the CC-BY image/audio alternatives.
   until real interaction data (uro backpacks) exists.** Content-derived semantic IDs still give cold-start
   regardless. The Godot corpus's real 3D meshes (31 `.glb`/`.gltf`/`.obj`, incl. character models →
   phenotype path) feed the mesh encoder now.
+- (-) **Phenotype needs TWO data sources, not one** — the `nadizik` set is **facial expression** (FACS),
+  which does NOT cover the **body skeleton**. The COCO-17 → `somaxc` → ANNY retarget targets the body, so a
+  separate FOSS **body-motion** dataset is still required (see the two phenotype rows). Also note: the Godot
+  corpus has **no human assets** (stylized robots/creatures + 1 mannequin), so rf-detr keypoints run on the
+  human datasets, NOT the Godot proxy — correcting the "Godot character meshes → phenotype" note above.
 - ODC-BY / per-object Objaverse licenses require attribution and per-object filtering for redistribution.
