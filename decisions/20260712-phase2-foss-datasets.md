@@ -24,7 +24,9 @@ against the HF API on 2026-07-12; only OSI/permissive or CC-BY/CC0/ODC-BY qualif
 | Mesh (scale)              | `allenai/objaverse-xl`                                      | **ODC-BY**    | Huge; per-object licenses vary — filter for CC0/CC-BY.             |
 | **Image** (asset renders) | bundled in `TRELLIS-500K`                                   | **MIT**       | Renders are the item image modality — no separate set needed.      |
 | Image (general, alt)      | `whyen-wang/coco_captions`                                  | **CC-BY-4.0** | If in-the-wild images are wanted.                                  |
-| **Text** (caption/scene)  | `tiange/Cap3D`                                              | **ODC-BY**    | Captions for the 3D objects → scene/XMP text modality.             |
+| **Text** (asset caption)  | `tiange/Cap3D`                                              | **ODC-BY**    | Captions for the 3D objects (generic object text).                 |
+| **Text** (Godot GDScript) | `icici121/godot-gdscript-dataset`                          | **Apache-2.0** | Real GDScript code as text (11k dl); also `wallstoneai/godot-gdscript-dataset`, `Miauuuuuuu/godot-ds3-deg` (Apache-2.0). |
+| **Text** (Godot `.tscn` scenes) | GitHub `godotengine/godot-demo-projects` + permissive Godot repos | **MIT** | Actual scene-graph text — **no packaged HF dataset exists**; scrape `.tscn`/`.escn` via GitHub code search (`extension:tscn`). |
 | **Audio**                 | `agkphysics/AudioSet`                                       | **CC-BY-4.0** | For the LAION-CLAP audio encoder.                                  |
 | Audio (Freesound/LAION)   | `benjamin-paine/freesound-laion-640k-commercial-16khz-full` | **CC-BY-4.0** | Commercial-safe Freesound/LAION-audio.                             |
 | **Body / phenotype**      | `nadizik/synthetic-human-expressions-poses-3d`              | **CC-BY-4.0** | Synthetic 3D human poses → rf-detr keypoints → ANNY fit.           |
