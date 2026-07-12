@@ -1,0 +1,25 @@
+{
+  "generated_by": "taskweft plan (HTN solve) + plain critical-path rollup (no minizinc)",
+  "domain": "plans/migration.domain.jsonld",
+  "ordered_plan": [
+    "a_p2_mesh_cuda_encode",
+    "a_p2_mesh_slang_vae",
+    "a_p2_mesh_drop_cuda",
+    "a_p2_encoders",
+    "a_p2_store",
+    "a_p2_i2i",
+    "a_p2_coldstart"
+  ],
+  "durations_hours": {
+    "a_p2_mesh_cuda_encode": 4.0,
+    "a_p2_mesh_slang_vae": 16.0,
+    "a_p2_mesh_drop_cuda": 1.0,
+    "a_p2_encoders": 8.0,
+    "a_p2_store": 3.0,
+    "a_p2_i2i": 4.0,
+    "a_p2_coldstart": 2.0
+  },
+  "sequential_hours": 38.0,
+  "critical_path_hours": 17.0,
+  "note": "critical_path = min makespan with unlimited parallel workers; sequential = single worker."
+}
