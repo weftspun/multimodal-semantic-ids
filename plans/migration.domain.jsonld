@@ -20,6 +20,9 @@
       "p1_eval": true,
       "p1_parity": true,
       "p2_nvdiffrast_gate": true,
+      "p2_datasets": true,
+      "p2_godot_scene_text": false,
+      "p2_mesh_encoder": false,
       "p2_encoders": false,
       "p2_store": false,
       "p2_i2i": false,
@@ -39,6 +42,9 @@
     "a_p1_eval":           {"params": [], "body": [{"set": "/done/p1_eval",           "value": true}]},
     "a_p1_parity":         {"params": [], "body": [{"set": "/done/p1_parity",         "value": true}]},
     "a_p2_nvdiffrast_gate":{"params": [], "body": [{"set": "/done/p2_nvdiffrast_gate","value": true}]},
+    "a_p2_datasets":       {"params": [], "body": [{"set": "/done/p2_datasets",       "value": true}]},
+    "a_p2_godot_scene_text":{"params": [], "body": [{"set": "/done/p2_godot_scene_text","value": true}]},
+    "a_p2_mesh_encoder":   {"params": [], "body": [{"set": "/done/p2_mesh_encoder",   "value": true}]},
     "a_p2_encoders":       {"params": [], "body": [{"set": "/done/p2_encoders",       "value": true}]},
     "a_p2_store":          {"params": [], "body": [{"set": "/done/p2_store",          "value": true}]},
     "a_p2_i2i":            {"params": [], "body": [{"set": "/done/p2_i2i",            "value": true}]},
@@ -57,6 +63,9 @@
     "m_p1_eval":            {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p1_eval",            "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p1_eval"]]}]},
     "m_p1_parity":          {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p1_parity",          "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p1_parity"]]}]},
     "m_p2_nvdiffrast_gate": {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_nvdiffrast_gate", "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_nvdiffrast_gate"]]}]},
+    "m_p2_datasets":        {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_datasets",         "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_datasets"]]}]},
+    "m_p2_godot_scene_text":{"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_godot_scene_text", "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_godot_scene_text"]]}]},
+    "m_p2_mesh_encoder":    {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_mesh_encoder",     "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_mesh_encoder"]]}]},
     "m_p2_encoders":        {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_encoders",        "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_encoders"]]}]},
     "m_p2_store":           {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_store",           "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_store"]]}]},
     "m_p2_i2i":             {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_i2i",             "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_i2i"]]}]},
@@ -64,7 +73,7 @@
 
     "phase0": {"params": [], "alternatives": [{"name": "do", "subtasks": [["m_taskweft_mcp"], ["m_scaffold"], ["m_readme"], ["m_retire"], ["m_crossrepo"]]}]},
     "phase1": {"params": [], "alternatives": [{"name": "do", "subtasks": [["m_p1_data"], ["m_p1_fsq"], ["m_p1_decoder"], ["m_p1_train"], ["m_p1_eval"], ["m_p1_parity"]]}]},
-    "phase2": {"params": [], "alternatives": [{"name": "do", "subtasks": [["m_p2_nvdiffrast_gate"], ["m_p2_encoders"], ["m_p2_store"], ["m_p2_i2i"], ["m_p2_coldstart"]]}]},
+    "phase2": {"params": [], "alternatives": [{"name": "do", "subtasks": [["m_p2_nvdiffrast_gate"], ["m_p2_datasets"], ["m_p2_godot_scene_text"], ["m_p2_mesh_encoder"], ["m_p2_encoders"], ["m_p2_store"], ["m_p2_i2i"], ["m_p2_coldstart"]]}]},
 
     "migrate": {"params": [], "alternatives": [{"name": "do", "subtasks": [["phase0"], ["phase1"], ["phase2"]]}]}
   },
