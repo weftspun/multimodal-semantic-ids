@@ -2,7 +2,7 @@
   "@context": {"vsekai": "https://v-sekai.org/", "domain": "vsekai:planning/domain/"},
   "@type": "domain:Definition",
   "name": "librecommender_to_foss_semantic_id_migration",
-  "description": "HTN decomposition of the LibRecommender -> FOSS semantic-ID generative-retrieval migration. done/* flags seed completed work; each action has an ISO8601 'duration' (calibrated to AI wall-clock) and a 'platform'. Data: godot-demo-projects project=session is the BOOTSTRAP proxy; the REAL user->item source is V-Sekai uro backpacks (Uro.Inventory.Backpack: owner->users, Map/Avatar/Prop->assets, backpack_join+timestamp->user_item_edges+sessions). Milestone A (working recommender on proxy, then wire uro backpacks) before Milestone B (Slang+Lean4 -> drop CUDA). See decisions/20260712-*.md.",
+  "description": "HTN decomposition of the LibRecommender -> FOSS semantic-ID generative-retrieval migration. done/* flags seed completed work; each action has an ISO8601 'duration' (calibrated to AI wall-clock) and a 'platform'. Data: godot-demo-projects project=session is the BOOTSTRAP proxy but is too sparse for SEQUENTIAL training (~2.9 scenes/project -> length-2 sessions); the REAL user->item source is V-Sekai uro backpacks (Uro.Inventory.Backpack: owner->users, Map/Avatar/Prop->assets, backpack_join+timestamp->user_item_edges+sessions). MODALITY-FIRST pivot (2026-07-12): exercise the content encoders on real Godot assets NOW (text done+paused, mesh done: 31 meshes shape+texture grid-aligned) and DEFER sequential-recommender training (i2i) until real interaction data (uro backpacks) exists -> so milestone A order is encoders -> store -> uro_backpack -> i2i -> coldstart. TRELLIS.2 is a VAE: the SLAT latent is INVERTIBLE (SLAT -> decoder -> mesh/gaussians/radiance), so the recommender only needs the FOSS-clean ENCODE path, but in-repo RECONSTRUCTION needs a FOSS decoder because the stock decode pulls nvdiffrast (NVIDIA non-commercial) -> a_p2_mesh_decode_foss in milestone B (gsplat Apache for gaussians; PyTorch3D BSD / Kaolin Apache / Slang for the mesh rasterizer). Milestone A (working recommender on proxy content, then wire uro backpacks) before Milestone B (Slang+Lean4 -> drop CUDA, incl. the decoder). See decisions/20260712-*.md.",
   "variables": [
     {"name": "done", "init": {
       "madrs": true, "pixi": true, "pyproject": true, "taskweft_mcp": true,
@@ -11,12 +11,17 @@
       "p2_nvdiffrast_gate": true, "p2_datasets": true, "p2_godot_scene_text": true,
       "p2_mesh_voxelize": true,
       "p2_mesh_cuda_linux": true,
+      "p2_enc_text": true,
+      "p2_enc_mesh": true,
+      "p2_enc_image": false,
+      "p2_enc_phenotype": false,
       "p2_encoders": false,
       "p2_store": false,
+      "p2_uro_backpack": false,
       "p2_i2i": false,
       "p2_coldstart": false,
-      "p2_uro_backpack": false,
       "p2_mesh_slang_linux": false,
+      "p2_mesh_decode_foss": false,
       "p2_mesh_slang_windows": false,
       "p2_mesh_drop_cuda": false
     }}
@@ -24,29 +29,45 @@
   "actions": {
     "a_p2_mesh_voxelize":     {"params": [], "duration": "PT10M", "platform": "windows", "body": [{"set": "/done/p2_mesh_voxelize", "value": true}]},
     "a_p2_mesh_cuda_linux":   {"params": [], "duration": "PT2H",  "platform": "linux",   "body": [{"check": "/done/p2_mesh_voxelize", "eq": true}, {"set": "/done/p2_mesh_cuda_linux", "value": true}]},
-    "a_p2_encoders":          {"params": [], "duration": "PT1H",  "platform": "windows", "body": [{"set": "/done/p2_encoders", "value": true}]},
+
+    "a_p2_enc_text":          {"params": [], "duration": "PT1H",  "platform": "windows", "body": [{"set": "/done/p2_enc_text", "value": true}]},
+    "a_p2_enc_mesh":          {"params": [], "duration": "PT1H",  "platform": "linux",   "body": [{"check": "/done/p2_mesh_cuda_linux", "eq": true}, {"set": "/done/p2_enc_mesh", "value": true}]},
+    "a_p2_enc_image":         {"params": [], "duration": "PT30M", "platform": "windows", "body": [{"check": "/done/p2_enc_text", "eq": true}, {"set": "/done/p2_enc_image", "value": true}]},
+    "a_p2_enc_phenotype":     {"params": [], "duration": "PT1H",  "platform": "windows", "body": [{"check": "/done/p2_enc_mesh", "eq": true}, {"set": "/done/p2_enc_phenotype", "value": true}]},
+    "a_p2_encoders":          {"params": [], "duration": "PT10M", "platform": "any",     "body": [{"check": "/done/p2_enc_text", "eq": true}, {"check": "/done/p2_enc_mesh", "eq": true}, {"check": "/done/p2_enc_image", "eq": true}, {"check": "/done/p2_enc_phenotype", "eq": true}, {"set": "/done/p2_encoders", "value": true}]},
+
     "a_p2_store":             {"params": [], "duration": "PT20M", "platform": "any",     "body": [{"check": "/done/p2_encoders", "eq": true}, {"check": "/done/p2_mesh_cuda_linux", "eq": true}, {"set": "/done/p2_store", "value": true}]},
-    "a_p2_i2i":               {"params": [], "duration": "PT30M", "platform": "any",     "body": [{"check": "/done/p2_store", "eq": true}, {"set": "/done/p2_i2i", "value": true}]},
+    "a_p2_uro_backpack":      {"params": [], "duration": "PT1H",  "platform": "any",     "body": [{"check": "/done/p2_store", "eq": true}, {"set": "/done/p2_uro_backpack", "value": true}]},
+    "a_p2_i2i":               {"params": [], "duration": "PT30M", "platform": "any",     "body": [{"check": "/done/p2_uro_backpack", "eq": true}, {"set": "/done/p2_i2i", "value": true}]},
     "a_p2_coldstart":         {"params": [], "duration": "PT15M", "platform": "any",     "body": [{"check": "/done/p2_i2i", "eq": true}, {"set": "/done/p2_coldstart", "value": true}]},
-    "a_p2_uro_backpack":      {"params": [], "duration": "PT1H",  "platform": "any",     "body": [{"check": "/done/p2_coldstart", "eq": true}, {"set": "/done/p2_uro_backpack", "value": true}]},
+
     "a_p2_mesh_slang_linux":  {"params": [], "duration": "PT4H",  "platform": "linux",   "body": [{"check": "/done/p2_mesh_cuda_linux", "eq": true}, {"set": "/done/p2_mesh_slang_linux", "value": true}]},
-    "a_p2_mesh_slang_windows":{"params": [], "duration": "PT20M", "platform": "windows", "body": [{"check": "/done/p2_mesh_slang_linux", "eq": true}, {"set": "/done/p2_mesh_slang_windows", "value": true}]},
+    "a_p2_mesh_decode_foss":  {"params": [], "duration": "PT3H",  "platform": "linux",   "body": [{"check": "/done/p2_mesh_slang_linux", "eq": true}, {"set": "/done/p2_mesh_decode_foss", "value": true}]},
+    "a_p2_mesh_slang_windows":{"params": [], "duration": "PT20M", "platform": "windows", "body": [{"check": "/done/p2_mesh_decode_foss", "eq": true}, {"set": "/done/p2_mesh_slang_windows", "value": true}]},
     "a_p2_mesh_drop_cuda":    {"params": [], "duration": "PT10M", "platform": "any",     "body": [{"check": "/done/p2_mesh_slang_windows", "eq": true}, {"set": "/done/p2_mesh_drop_cuda", "value": true}]}
   },
   "methods": {
     "m_p2_mesh_voxelize":     {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_mesh_voxelize",     "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_mesh_voxelize"]]}]},
     "m_p2_mesh_cuda_linux":   {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_mesh_cuda_linux",   "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_mesh_cuda_linux"]]}]},
+
+    "m_p2_enc_text":          {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_enc_text",          "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_enc_text"]]}]},
+    "m_p2_enc_mesh":          {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_enc_mesh",          "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_enc_mesh"]]}]},
+    "m_p2_enc_image":         {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_enc_image",         "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_enc_image"]]}]},
+    "m_p2_enc_phenotype":     {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_enc_phenotype",     "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_enc_phenotype"]]}]},
     "m_p2_encoders":          {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_encoders",          "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_encoders"]]}]},
+
     "m_p2_store":             {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_store",             "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_store"]]}]},
+    "m_p2_uro_backpack":      {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_uro_backpack",      "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_uro_backpack"]]}]},
     "m_p2_i2i":               {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_i2i",               "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_i2i"]]}]},
     "m_p2_coldstart":         {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_coldstart",         "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_coldstart"]]}]},
-    "m_p2_uro_backpack":      {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_uro_backpack",      "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_uro_backpack"]]}]},
+
     "m_p2_mesh_slang_linux":  {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_mesh_slang_linux",  "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_mesh_slang_linux"]]}]},
+    "m_p2_mesh_decode_foss":  {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_mesh_decode_foss",  "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_mesh_decode_foss"]]}]},
     "m_p2_mesh_slang_windows":{"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_mesh_slang_windows","eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_mesh_slang_windows"]]}]},
     "m_p2_mesh_drop_cuda":    {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_mesh_drop_cuda",     "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_mesh_drop_cuda"]]}]},
 
-    "milestone_a": {"params": [], "alternatives": [{"name": "do", "subtasks": [["m_p2_mesh_voxelize"], ["m_p2_mesh_cuda_linux"], ["m_p2_encoders"], ["m_p2_store"], ["m_p2_i2i"], ["m_p2_coldstart"], ["m_p2_uro_backpack"]]}]},
-    "milestone_b": {"params": [], "alternatives": [{"name": "do", "subtasks": [["m_p2_mesh_slang_linux"], ["m_p2_mesh_slang_windows"], ["m_p2_mesh_drop_cuda"]]}]},
+    "milestone_a": {"params": [], "alternatives": [{"name": "do", "subtasks": [["m_p2_mesh_voxelize"], ["m_p2_mesh_cuda_linux"], ["m_p2_enc_text"], ["m_p2_enc_mesh"], ["m_p2_enc_image"], ["m_p2_enc_phenotype"], ["m_p2_encoders"], ["m_p2_store"], ["m_p2_uro_backpack"], ["m_p2_i2i"], ["m_p2_coldstart"]]}]},
+    "milestone_b": {"params": [], "alternatives": [{"name": "do", "subtasks": [["m_p2_mesh_slang_linux"], ["m_p2_mesh_decode_foss"], ["m_p2_mesh_slang_windows"], ["m_p2_mesh_drop_cuda"]]}]},
     "migrate": {"params": [], "alternatives": [{"name": "do", "subtasks": [["milestone_a"], ["milestone_b"]]}]}
   },
   "tasks": [["migrate"]]
