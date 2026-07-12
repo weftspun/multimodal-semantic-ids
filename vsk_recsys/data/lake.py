@@ -51,12 +51,13 @@ def training_features_view(lake_dir: str = "lake", con=None):
     con = con or duckdb.connect()
     lake = Path(lake_dir)
     assets = lake / "assets.parquet"
-    joins = ""
+    selects, joins = ["a.*"], ""
     for i, rel in enumerate(sorted(lake.glob("asset_*.parquet"))):
         alias = f"r{i}"
+        selects.append(f"{alias}.* EXCLUDE (asset_uuid)")  # include the modality's feature columns
         joins += f"\n  LEFT JOIN read_parquet('{rel.as_posix()}') {alias} ON a.asset_uuid = {alias}.asset_uuid"
     con.execute(
         f"CREATE OR REPLACE VIEW training_features AS "
-        f"SELECT a.* FROM read_parquet('{assets.as_posix()}') a{joins}"
+        f"SELECT {', '.join(selects)} FROM read_parquet('{assets.as_posix()}') a{joins}"
     )
     return con

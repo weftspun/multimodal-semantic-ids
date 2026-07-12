@@ -1,43 +1,47 @@
-"""Unified multimodal item encoder — Qwen3-VL-Embedding (text + image in one shared space).
+"""Unified multimodal item encoder — Qwen3-VL-Embedding (text + image, one shared space).
 
-Replaces ModernBERT (dropped) for Phase 2: a SINGLE Apache-2.0 encoder embeds both Godot `.tscn` scene
-text AND asset renders into the same space, so text↔image fuse cleanly (the "unified, not siloed"
-principle). Its companion Qwen3-VL-Reranker feeds the retriever→ranker stage. See
-decisions/20260712-multimodal-foss-encoder-stack.md.
+Replaces ModernBERT for Phase 2: a SINGLE Apache-2.0 encoder embeds Godot `.tscn` scene text AND asset
+renders into the same space (text↔image fuse cleanly). Its companion Qwen3-VL-Reranker feeds the
+retriever→ranker stage. See decisions/20260712-multimodal-foss-encoder-stack.md.
 
-Qwen3-VL-Embedding is NOT a plain `pip`/`AutoModel` package — it ships a `Qwen3VLEmbedder` class in the
-repo's `src/`. Vendor `QwenLM/Qwen3-VL-Embedding` (Apache-2.0) and add its `src/` to the path; the base
-Qwen3-VL weights come from HF. Runs in the default cu128 pixi env (GPU batch job → ETNF parquet).
+Qwen3-VL-Embedding-2B (smallest, Apache-2.0, ungated) is a **sentence-transformers** model, so text
+encoding is a clean `SentenceTransformer(...).encode(...)` — no repo vendoring. Runs in the default cu128
+pixi env → ETNF parquet. (Image / mixed-modality inputs use the model's `scripts/qwen3_vl_embedding.py::
+Qwen3VLEmbedder` path — wired when the 3D-render corpus lands.)
 """
 
 from __future__ import annotations
 
+DEFAULT_MODEL = "Qwen/Qwen3-VL-Embedding-2B"
+
 
 class Qwen3VLEncoder:
-    """Unified text+image encoder via Qwen3-VL-Embedding's ``Qwen3VLEmbedder.process``.
+    modality = "text"
+    relation = "asset_text_embedding"
 
-    One instance encodes either modality; ``modality``/``relation`` are set per use so each writes its
-    own ETNF 1:1 relation (``asset_text_embedding`` / ``asset_image_embedding``).
-    """
+    def __init__(self, model_path: str = DEFAULT_MODEL, device=None, dtype: str = "float16",
+                 max_seq_length: int = 1024):
+        # fp16 + a sequence cap is ~1000x faster than the fp32 / 262k-max default (verbose .tscn text
+        # tokenizes long; the scene header + top nodes fit in ~1024 tokens).
+        import torch
+        from sentence_transformers import SentenceTransformer
 
-    def __init__(self, model_path: str = "Qwen/Qwen3-VL-Embedding", device=None, modality: str = "text"):
-        # Qwen3VLEmbedder lives in the vendored Qwen3-VL-Embedding repo's src/models/.
-        from src.models.qwen3_vl_embedding import Qwen3VLEmbedder  # type: ignore
+        kw = {"model_kwargs": {"torch_dtype": getattr(torch, dtype)}} if dtype else {}
+        self.model = SentenceTransformer(model_path, device=device, trust_remote_code=True, **kw)
+        if max_seq_length:
+            self.model.max_seq_length = max_seq_length
 
-        self.model = Qwen3VLEmbedder(model_path=model_path, device=device)
-        self.set_modality(modality)
+    @property
+    def dim(self) -> int:
+        return self.model.get_sentence_embedding_dimension()
 
-    def set_modality(self, modality: str) -> "Qwen3VLEncoder":
-        assert modality in ("text", "image")
-        self.modality = modality
-        self.relation = f"asset_{modality}_embedding"
-        return self
-
-    def encode(self, items):  # -> np.ndarray (n, dim)
-        """``items``: list of strings (scene text) or image paths/PIL, per ``self.modality``.
-
-        Uses ``Qwen3VLEmbedder.process`` which accepts text/image (single or list) and returns the
-        [EOS] hidden-state embeddings.
-        """
-        key = "text" if self.modality == "text" else "image"
-        return self.model.process([{key: it} for it in items])
+    def encode(self, texts, batch_size: int = 8, normalize: bool = True, prompt: str | None = None):
+        """List[str] -> np.ndarray (n, dim). ``prompt`` = the retrieval instruction (Qwen recommends one)."""
+        return self.model.encode(
+            list(texts),
+            batch_size=batch_size,
+            normalize_embeddings=normalize,
+            convert_to_numpy=True,
+            show_progress_bar=True,
+            prompt=prompt,
+        )

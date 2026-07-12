@@ -18,11 +18,13 @@ pandas = ">=2.2,<4"
 pyarrow = ">=17"
 scipy = ">=1.13"
 duckdb = ">=1.1"
+pillow = "*"        # Qwen3-VL-Embedding processor (Qwen2VLImageProcessor) needs PIL
 
 [pypi-dependencies]
 # Phase 1 (MovieLens parity) — all FOSS Apache-2.0 / MIT
 # CUDA build (RTX 4090, sm_89); driver supports CUDA 13.1 (backward-compat with cu12x).
 torch = { version = ">=2.5.1", index = "https://download.pytorch.org/whl/cu128" }
+torchvision = { version = "*", index = "https://download.pytorch.org/whl/cu128" }  # Qwen3-VL processor
 vector-quantize-pytorch = "*"   # MIT — ResidualFSQ semantic IDs
 sentence-transformers = "*"     # ModernBERT text encoder
 einops = "*"
