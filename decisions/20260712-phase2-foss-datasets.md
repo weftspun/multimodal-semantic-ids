@@ -25,8 +25,7 @@ against the HF API on 2026-07-12; only OSI/permissive or CC-BY/CC0/ODC-BY qualif
 | **Image** (asset renders) | bundled in `TRELLIS-500K`                                   | **MIT**       | Renders are the item image modality — no separate set needed.      |
 | Image (general, alt)      | `whyen-wang/coco_captions`                                  | **CC-BY-4.0** | If in-the-wild images are wanted.                                  |
 | **Text** (asset caption)  | `tiange/Cap3D`                                              | **ODC-BY**    | Captions for the 3D objects (generic object text).                 |
-| **Text** (Godot GDScript) | `icici121/godot-gdscript-dataset`                          | **Apache-2.0** | Real GDScript code as text (11k dl); also `wallstoneai/godot-gdscript-dataset`, `Miauuuuuuu/godot-ds3-deg` (Apache-2.0). |
-| **Text** (Godot `.tscn` scenes) | GitHub `godotengine/godot-demo-projects` + permissive Godot repos | **MIT** | Actual scene-graph text — **no packaged HF dataset exists**; scrape `.tscn`/`.escn` via GitHub code search (`extension:tscn`). |
+| **Text** (Godot scenes+scripts) — PRIMARY | `godotengine/godot-demo-projects` (git, MIT) | **MIT** | Real scene-graph text: **394 `.tscn` + 458 `.gd` + 137 `.tres` + 46 `.gdshader` across 138 projects** (9.1k★). Single clean source; closest public analog to V-Sekai assets. **Scenes are the items; each project is a session** (see Consequences). GDScript-only supplements exist (`icici121/godot-gdscript-dataset`, Apache-2.0) but are not needed. |
 | **Audio**                 | `agkphysics/AudioSet`                                       | **CC-BY-4.0** | For the LAION-CLAP audio encoder.                                  |
 | Audio (Freesound/LAION)   | `benjamin-paine/freesound-laion-640k-commercial-16khz-full` | **CC-BY-4.0** | Commercial-safe Freesound/LAION-audio.                             |
 | **Body / phenotype**      | `nadizik/synthetic-human-expressions-poses-3d`              | **CC-BY-4.0** | Synthetic 3D human poses → rf-detr keypoints → ANNY fit.           |
@@ -40,7 +39,11 @@ prefer the CC-BY image/audio alternatives.
 
 - (+) Every modality has genuine, license-clean data; TRELLIS-500K alone covers mesh+image+text.
 - (+) Re-pointing to real Godot assets later is a data-source swap, not a code change (ETNF lake).
-- (-) **No interaction/session data exists** in any of these — the recommender's user→item signal must
-  be **simulated** (content-similarity / shared-category co-occurrence walks over the catalog) until
-  V-Sekai telemetry exists. Decide the simulation scheme when wiring `a_p2_i2i`.
+- (+) **`godot-demo-projects` gives real item→item structure without fabricating interactions:**
+  **items = individual `.tscn` scenes; sessions = projects** (the scenes co-occurring in one project are
+  used together). This is the cleanest session signal available and largely resolves the interaction-data
+  gap for the Godot text corpus — no synthetic co-occurrence walks needed. Wire this in `a_p2_i2i`.
+- (-) The 3D/audio/body datasets still lack sessions; if their catalogs are mixed in, fall back to
+  content-similarity co-occurrence for those items. The Godot corpus is small (~394 scenes) — fine for a
+  proof-of-stack + cold-start demo, not large-scale training.
 - ODC-BY / per-object Objaverse licenses require attribution and per-object filtering for redistribution.
