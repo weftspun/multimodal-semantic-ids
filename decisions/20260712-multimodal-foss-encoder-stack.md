@@ -79,6 +79,8 @@ Fused modality vector → `ResidualFSQ` → per-asset semantic ID.
 - (+) Fully FOSS, cross-modal, cold-start-capable item representation.
 - (+) Each encoder is an independent offline job writing one ETNF relation.
 - (-) rf-detr gives 2D keypoints → single-view 2D→3D fit is depth-ambiguous → approximate phenotype.
-- (-) TRELLIS.2 is a heavy CUDA dependency (o-voxel `_C` extension), but **runs on Windows** via the
-  MIT `stableprojectorz` fork's prebuilt wheels (no Linux required); nvdiffrast FOSS gate passes for the
-  encode path (see above).
+- (-) TRELLIS.2 is a heavy CUDA dependency. **Only Stage-1 voxelization runs on Windows** (via the MIT
+  `stableprojectorz` fork's prebuilt wheels). The **Stage-2 shape/texture VAE encode requires WSL2 Linux**
+  with **FlexGEMM built from source** — the prebuilt Windows `flex_gemm` wheel ships only `kernels.cuda`
+  (neighbor maps), NOT the triton GEMM kernels the sparse-conv forward needs. nvdiffrast FOSS gate passes
+  for the encode path (see above).

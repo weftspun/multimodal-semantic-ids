@@ -38,9 +38,14 @@ Chosen: **ETNF-decomposed parquet lake**, one relation per file:
 - **Many-to-many facts = all-key junctions:** `session_assets (session_uuid, asset_uuid)`,
   `item_graph (source_uuid, target_uuid, cooccurrence_type)`, `user_item_edges (user_uuid, asset_uuid,
 interaction_type)` — the entire heading is the key.
-- **1:1 derived extensions keyed by `asset_uuid`** — one relation _per modality_, each written by its
-  own offline encoder job: `asset_text_embedding`, `asset_image_embedding`, `asset_mesh_embedding`,
-  `asset_audio_embedding`, `asset_phenotype`, and `asset_semantic_ids` (the FSQ code tuple).
+- **Derived-extension relations keyed by `asset_uuid`** — one relation _per modality_, each written by its
+  own offline encoder job:
+  - **1:1** — `asset_text_embedding` and `asset_image_embedding` (both from the single unified
+    **Qwen3-VL-Embedding** space now — ModernBERT dropped), `asset_audio_embedding`, `asset_phenotype`.
+  - **1:N per-token** — the mesh SLAT is a *structured* per-voxel token set (NOT a pooled vector), so it is
+    **`asset_mesh_shape_slat`** (geometry) and **`asset_mesh_texture_slat`** (PBR) — full SLAT = shape ⊕
+    texture — each keyed by (`asset_uuid`, token_idx) with (coord, 32-d feats), Hilbert-ordered, then
+    **FSQ-quantized per token** into `asset_semantic_ids` (per-modality FSQ codes).
 - **Integrity:** every PK checked unique; every FK checked to resolve into its parent (no orphans).
 - Training features are assembled by **join** (a DuckDB view), never by storing derived columns.
 

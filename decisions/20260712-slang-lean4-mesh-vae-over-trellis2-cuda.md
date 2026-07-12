@@ -17,8 +17,8 @@ version** — the ops are fundamentally custom CUDA. This is fragile, non-portab
 locked), opaque, and **off-stack for V-Sekai**, whose runtime is Godot (Vulkan) and whose method is
 formal (Lean 4 + Plausible; cf. taskweft, gait-classification).
 
-What we actually need is narrow: the **encoder forward only** (mesh → SLAT latent → pooled vector) for
-content embeddings. We do **not** train the mesh VAE and do not need its decoder/renderer.
+What we actually need is narrow: the **encoder forward only** (mesh → **structured N×32 SLAT tokens, no
+pooling**) for content embeddings. We do **not** train the mesh VAE and do not need its decoder/renderer.
 
 ## Decision Drivers
 
@@ -30,9 +30,9 @@ content embeddings. We do **not** train the mesh VAE and do not need its decoder
 
 ## Considered Options
 
-- **Keep the TRELLIS.2 CUDA VAE.** Works only via the fork's bundled runtime; NVIDIA/Linux-leaning,
-  version-locked, `cumesh`/`flex_gemm`/`spconv` binary chain. (Interim fallback — voxelization already
-  works; full encode is one `cumesh` install away.)
+- **Keep the TRELLIS.2 CUDA VAE.** NVIDIA/Linux-bound, version-locked binary chain. **Now working as the
+  reference path on WSL2 Linux** (FlexGEMM built from source → has the triton GEMM kernels; full shape ⊕
+  texture SLAT encode verified). Not portable — that's why the Slang reimplementation exists.
 - **ONNX-export the VAE.** Sparse convs export poorly; still needs the native voxelizer; partial at best.
 - **Reimplement the encoder forward as Slang compute shaders + Lean 4** (chosen, proposed).
 
@@ -48,21 +48,22 @@ kernels are written and formally checked in Lean, then codegen'd to portable Sla
 `fire/plausible-witness-dag` (MIT — verified iterative-deepening kernel/witness search), and
 `v-sekai-multiplayer-fabric/lean-duckdb` (Lean 4 ⇄ ETNF parquet lake I/O).
 
-- **Weights, not retraining.** Port TRELLIS.2's trained MIT shape-encoder weights
-  (`shape_enc_next_dc_f16c32_fp16.safetensors`, 709 MB) into the Slang kernels — same architecture,
-  inference-only. Avoids the (expensive) retraining of a mesh VAE.
-- **Keep Stage-1 O-Voxel voxelization** as-is for now (it already runs on Windows, FOSS-clean —
+- **Weights, not retraining.** Port TRELLIS.2's trained MIT weights for **both** encoders —
+  `shape_enc_next_dc_f16c32_fp16` (geometry) **and** `tex_enc_next_dc_f16c32_fp16` (PBR/texture,
+  `SparseUnetVaeEncoder`), 709 MB each — into the Slang kernels; same architecture, inference-only.
+- **Keep Stage-1 O-Voxel voxelization** as-is for now (Stage-1 runs on Windows, FOSS-clean —
   [20260712-multimodal-foss-encoder-stack]); optionally port it to Slang later so the whole mesh path is
   CUDA-free.
 - **Scope: encoder forward only.** Sparse ConvNeXt / ResBlock-S2C 3D convs + the VAE bottleneck →
-  pooled SLAT vector. No decoder, no renderer.
+  **structured N×32 SLAT tokens (no pooling)**, then per-token FSQ downstream. No decoder, no renderer.
 
 **Platform sequence.** The prebuilt Windows `flex_gemm` wheel ships only `kernels.cuda` (neighbor maps),
 NOT the triton GEMM kernels the sparse-conv forward needs — so the native CUDA encode cannot finish on
-Windows with the git wheels. Therefore: (1) get the **CUDA fallback working on Linux** (TRELLIS.2's native
-platform, complete `flex_gemm`) to produce a reference mesh→SLAT vector; (2) build the **Slang+Lean4
-encoder on Linux**, matched bit-close to that reference; (3) **verify the Slang path on Windows** (the
-whole point — portability); (4) **drop CUDA**. Voxelization (Stage 1) already runs on Windows FOSS-clean.
+Windows with the git wheels. Therefore: (1) **✅ DONE** — CUDA reference working on **WSL2 Linux**
+(FlexGEMM built from source → triton GEMM kernels present; full shape ⊕ texture SLAT reference produced);
+(2) build the **Slang+Lean4 encoder on Linux**, matched bit-close to that reference (both `shape_enc` and
+`tex_enc`); (3) **verify the Slang path on Windows** (the whole point — portability); (4) **drop CUDA**.
+Voxelization (Stage 1) already runs on Windows FOSS-clean.
 
 ### Consequences
 
@@ -72,7 +73,8 @@ whole point — portability); (4) **drop CUDA**. Voxelization (Stage 1) already 
 - (-) Significant R&D: reproduce the `FlexiDualGridVaeEncoder` numerics in Slang and match the PyTorch
   reference bit-closely enough for the weights to transfer; sparse-tensor layout in shader land is
   non-trivial.
-- (-) Until the port lands, the mesh embedding uses the interim CUDA fallback (install `cumesh` to finish
-  the native path) or is deferred; text/image/audio/phenotype encoders are unaffected.
+- (-) Until the port lands, the mesh embedding uses the **working WSL2 Linux CUDA reference path** (the
+  Slang path will be numerically matched against it); text/image/audio/phenotype encoders are unaffected.
 - Relationship: this supersedes the *implementation* of the mesh encoder in
-  [20260712-multimodal-foss-encoder-stack] while keeping its *interface* (mesh → fixed vector → FSQ).
+  [20260712-multimodal-foss-encoder-stack] while keeping its *interface* (mesh → ordered N×32 SLAT token
+  set → per-token FSQ).
