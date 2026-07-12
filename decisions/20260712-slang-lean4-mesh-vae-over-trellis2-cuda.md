@@ -56,14 +56,18 @@ kernels are written and formally checked in Lean, then codegen'd to portable Sla
   CUDA-free.
 - **Scope: encoder forward only.** Sparse ConvNeXt / ResBlock-S2C 3D convs + the VAE bottleneck →
   **structured N×32 SLAT tokens (no pooling)**, then per-token FSQ downstream. No decoder, no renderer.
-- **Decode is OPTIONAL (VAE-invertibility).** TRELLIS.2 is a VAE, so the SLAT latent is invertible
-  (`SLAT → decoder → mesh / 3D Gaussians / radiance field`); the recommender never needs this, but
-  decoding a semantic ID back to a mesh is a useful interpretability / round-trip sanity check
-  (`mesh → SLAT → FSQ → SLAT → mesh`). The stock decode path is the ONLY non-FOSS piece: it pulls
-  **nvdiffrast** (NVIDIA non-commercial). Replacements are all FOSS: **gsplat** (Apache-2.0) for the
-  Gaussian rasterizer, **PyTorch3D** (BSD) / **Kaolin DIB-R** (Apache-2.0) or a **Slang** differentiable
-  rasterizer for the mesh/FlexiCubes path. Wired as `a_p2_mesh_decode_foss` in Milestone B (the Slang port
-  covers the decoder too), NOT in the recommender critical path.
+- **Decode is OPTIONAL (VAE-invertibility) and is the Slang encoder's INVERSE.** TRELLIS.2 is a VAE, so
+  the SLAT latent is invertible; the recommender never needs decode, but round-tripping a semantic ID back
+  to a mesh (`mesh → SLAT → FSQ → SLAT → mesh`) is a useful interpretability / sanity check. Because the
+  **input is a mesh**, the inverse target is a **mesh** (FlexiCubes decode → surface), NOT gaussians or a
+  radiance field. The stock decode path is the ONLY non-FOSS piece: it pulls **nvdiffrast** (NVIDIA
+  non-commercial). **Decision: implement the mesh rasterizer in Slang** — deliberately the *same* stack as
+  the Slang encoder, so encode and decode are one symmetric invertible pair in one language / runtime /
+  precision (portable Vulkan/CPU, in-Godot, Lean4-verifiable end-to-end), rather than a Slang encoder
+  bolted onto a foreign rasterizer. **gsplat** (Apache-2.0, gaussians), **PyTorch3D** (BSD) and
+  **Kaolin DIB-R** (Apache-2.0) are FOSS *reference* rasterizers to match numerics against — not the
+  choice. Wired as `a_p2_mesh_decode_foss` in Milestone B (the Slang port covers the decoder too), NOT in
+  the recommender critical path.
 
 **Platform sequence.** The prebuilt Windows `flex_gemm` wheel ships only `kernels.cuda` (neighbor maps),
 NOT the triton GEMM kernels the sparse-conv forward needs — so the native CUDA encode cannot finish on
@@ -83,9 +87,10 @@ Voxelization (Stage 1) already runs on Windows FOSS-clean.
   non-trivial.
 - (-) Until the port lands, the mesh embedding uses the **working WSL2 Linux CUDA reference path** (the
   Slang path will be numerically matched against it); text/image/audio/phenotype encoders are unaffected.
-- (+) Because the SLAT VAE is invertible, the FOSS decoder (`a_p2_mesh_decode_foss`, gsplat/PyTorch3D/
-  Kaolin/Slang, replacing nvdiffrast) buys us in-repo mesh reconstruction for free once the port lands —
-  no extra model, and it doubles as a "what does this semantic code look like?" debugging tool.
+- (+) Because the SLAT VAE is invertible and the decoder is the **Slang encoder's inverse** (same stack),
+  the FOSS decoder (`a_p2_mesh_decode_foss`, Slang mesh rasterizer replacing nvdiffrast) buys us in-repo
+  mesh reconstruction for free once the port lands — no extra model, one symmetric encode↔decode pair, and
+  it doubles as a "what does this semantic code look like?" debugging tool.
 - Relationship: this supersedes the *implementation* of the mesh encoder in
   [20260712-multimodal-foss-encoder-stack] while keeping its *interface* (mesh → ordered N×32 SLAT token
   set → per-token FSQ).
