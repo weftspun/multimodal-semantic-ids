@@ -1,0 +1,35 @@
+[workspace]
+authors = ["K. S. Ernest (iFire) Lee <ernest.lee@chibifire.com>"]
+channels = ["conda-forge"]
+name = "vsk_session_item_recommendation"
+# win-64 for local Phase 1 (MovieLens parity, CPU-friendly); linux-64 for the
+# Phase 2 CUDA encoders (TRELLIS.2, Qwen3-VL-Embedding). See decisions/.
+platforms = ["linux-64", "win-64"]
+version = "0.1.0"
+
+[tasks]
+metrics-test = "python -m tests.test_metrics"
+etnf-test = "python -m tests.test_etnf"
+phase1 = "python -m vsk_recsys.train.phase1_movielens"
+
+[dependencies]
+python = "3.11.*"
+pandas = ">=2.2,<4"
+pyarrow = ">=17"
+scipy = ">=1.13"
+duckdb = ">=1.1"
+
+[pypi-dependencies]
+# Phase 1 (MovieLens parity) — all FOSS Apache-2.0 / MIT
+torch = ">=2.5.1"
+vector-quantize-pytorch = "*"   # MIT — ResidualFSQ semantic IDs
+sentence-transformers = "*"     # ModernBERT text encoder
+einops = "*"
+tqdm = "*"
+vsk-recsys = { path = ".", editable = true }
+
+# Phase 2 heavy encoders (Linux + CUDA only) are installed separately, not
+# pinned here, to keep the Phase 1 env light and cross-platform:
+#   Qwen3-VL-Embedding (Apache-2.0), microsoft/TRELLIS.2 (MIT, needs nvdiffrast
+#   FOSS-gate check), LAION-CLAP (Apache-2.0), roboflow/rf-detr (Apache tier),
+#   NVlabs/SOMA-X (+ANNY, Apache-2.0).

@@ -1,5 +1,9 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2025-present K. S. Ernest (iFire) Lee
+#
+# DEPRECATED — LibRecommender/PinSage (TensorFlow) baseline. Being migrated off; see
+# decisions/20260712-migrate-off-librecommender-to-foss-generative-retrieval.md and the
+# `vsk_recsys` package. Kept only for parity reference until Phase 1 lands, then removed.
 
 import pandas as pd
 import zipfile

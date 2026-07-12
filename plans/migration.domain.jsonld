@@ -1,0 +1,72 @@
+{
+  "@context": {"vsekai": "https://v-sekai.org/", "domain": "vsekai:planning/domain/"},
+  "@type": "domain:Definition",
+  "name": "librecommender_to_foss_semantic_id_migration",
+  "description": "HTN decomposition of the LibRecommender -> FOSS semantic-ID generative-retrieval migration. done/* flags seed already-completed work so the plan emits only the remaining ordered actions. See decisions/20260712-*.md.",
+  "variables": [
+    {"name": "done", "init": {
+      "madrs": true,
+      "pixi": true,
+      "pyproject": true,
+      "taskweft_mcp": false,
+      "scaffold": false,
+      "readme": false,
+      "retire": false,
+      "crossrepo": false,
+      "p1_data": false,
+      "p1_fsq": false,
+      "p1_decoder": false,
+      "p1_train": false,
+      "p1_eval": false,
+      "p1_parity": false,
+      "p2_nvdiffrast_gate": false,
+      "p2_encoders": false,
+      "p2_store": false,
+      "p2_i2i": false,
+      "p2_coldstart": false
+    }}
+  ],
+  "actions": {
+    "a_taskweft_mcp":      {"params": [], "body": [{"set": "/done/taskweft_mcp",      "value": true}]},
+    "a_scaffold":          {"params": [], "body": [{"set": "/done/scaffold",          "value": true}]},
+    "a_readme":            {"params": [], "body": [{"set": "/done/readme",            "value": true}]},
+    "a_retire":            {"params": [], "body": [{"set": "/done/retire",            "value": true}]},
+    "a_crossrepo":         {"params": [], "body": [{"set": "/done/crossrepo",         "value": true}]},
+    "a_p1_data":           {"params": [], "body": [{"set": "/done/p1_data",           "value": true}]},
+    "a_p1_fsq":            {"params": [], "body": [{"set": "/done/p1_fsq",             "value": true}]},
+    "a_p1_decoder":        {"params": [], "body": [{"set": "/done/p1_decoder",        "value": true}]},
+    "a_p1_train":          {"params": [], "body": [{"set": "/done/p1_train",          "value": true}]},
+    "a_p1_eval":           {"params": [], "body": [{"set": "/done/p1_eval",           "value": true}]},
+    "a_p1_parity":         {"params": [], "body": [{"set": "/done/p1_parity",         "value": true}]},
+    "a_p2_nvdiffrast_gate":{"params": [], "body": [{"set": "/done/p2_nvdiffrast_gate","value": true}]},
+    "a_p2_encoders":       {"params": [], "body": [{"set": "/done/p2_encoders",       "value": true}]},
+    "a_p2_store":          {"params": [], "body": [{"set": "/done/p2_store",          "value": true}]},
+    "a_p2_i2i":            {"params": [], "body": [{"set": "/done/p2_i2i",            "value": true}]},
+    "a_p2_coldstart":      {"params": [], "body": [{"set": "/done/p2_coldstart",      "value": true}]}
+  },
+  "methods": {
+    "m_taskweft_mcp":       {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/taskweft_mcp",       "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_taskweft_mcp"]]}]},
+    "m_scaffold":           {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/scaffold",           "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_scaffold"]]}]},
+    "m_readme":             {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/readme",             "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_readme"]]}]},
+    "m_retire":             {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/retire",             "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_retire"]]}]},
+    "m_crossrepo":          {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/crossrepo",          "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_crossrepo"]]}]},
+    "m_p1_data":            {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p1_data",            "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p1_data"]]}]},
+    "m_p1_fsq":             {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p1_fsq",             "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p1_fsq"]]}]},
+    "m_p1_decoder":         {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p1_decoder",         "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p1_decoder"]]}]},
+    "m_p1_train":           {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p1_train",           "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p1_train"]]}]},
+    "m_p1_eval":            {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p1_eval",            "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p1_eval"]]}]},
+    "m_p1_parity":          {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p1_parity",          "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p1_parity"]]}]},
+    "m_p2_nvdiffrast_gate": {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_nvdiffrast_gate", "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_nvdiffrast_gate"]]}]},
+    "m_p2_encoders":        {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_encoders",        "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_encoders"]]}]},
+    "m_p2_store":           {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_store",           "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_store"]]}]},
+    "m_p2_i2i":             {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_i2i",             "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_i2i"]]}]},
+    "m_p2_coldstart":       {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_coldstart",       "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_coldstart"]]}]},
+
+    "phase0": {"params": [], "alternatives": [{"name": "do", "subtasks": [["m_taskweft_mcp"], ["m_scaffold"], ["m_readme"], ["m_retire"], ["m_crossrepo"]]}]},
+    "phase1": {"params": [], "alternatives": [{"name": "do", "subtasks": [["m_p1_data"], ["m_p1_fsq"], ["m_p1_decoder"], ["m_p1_train"], ["m_p1_eval"], ["m_p1_parity"]]}]},
+    "phase2": {"params": [], "alternatives": [{"name": "do", "subtasks": [["m_p2_nvdiffrast_gate"], ["m_p2_encoders"], ["m_p2_store"], ["m_p2_i2i"], ["m_p2_coldstart"]]}]},
+
+    "migrate": {"params": [], "alternatives": [{"name": "do", "subtasks": [["phase0"], ["phase1"], ["phase2"]]}]}
+  },
+  "tasks": [["migrate"]]
+}

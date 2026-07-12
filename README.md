@@ -1,80 +1,77 @@
-# Movie Recommendation System with PinSage
+# Session-based Item Recommendation (V-Sekai)
 
-This repository contains a movie recommendation system built using the PinSage algorithm from the LibRecommender library. The system leverages collaborative filtering and graph-based techniques to provide personalized movie recommendations based on the MovieLens 20M dataset.
+A **FOSS (Apache-2.0 / MIT only), pure-PyTorch, semantic-ID generative-retrieval** recommender for
+session-based recommendation of user-generated **Godot scene/assets**. Items are encoded from their
+*content* into discrete **semantic IDs** with **Finite Scalar Quantization (FSQ)**, and a Transformer
+generates the next item's IDs. Because IDs are content-derived, brand-new assets are recommendable at
+inference — fixing cold-start for a churning UGC catalog.
 
-## Features
+> Migrating **off** LibRecommender / PinSage (TensorFlow). The old scripts (`recommend.py`,
+> `load.py`) are the **deprecated baseline**, kept only until Phase 1 reaches parity. See the
+> decision log in [`decisions/`](decisions/README.md).
 
-- **Graph-Based Recommendations**: Utilizes PinSage for item-to-item (i2i) recommendations.
-- **Multi-Value Feature Handling**: Processes multi-genre movie data using genre splitting.
-- **Chronological Split**: Splits dataset chronologically for realistic time-based evaluation.
-- **GPU Acceleration**: Supports TensorFlow GPU acceleration for faster training.
-- **Model Persistence**: Saves trained models for later inference.
+## Design at a glance
 
-## Installation
+- **Allocentric, item-centric (i2i).** Items live in one shared, viewpoint-invariant world-frame
+  space; a session is a sequence of item→item transitions. Users are their session of items, not an
+  ego-avatar vector. ([decision](decisions/20260712-allocentric-i2i-over-egocentric-u2i.md))
+- **FSQ over RQ-VAE** for semantic IDs — no learned codebook, no collapse, near-zero collisions.
+  ([decision](decisions/20260712-fsq-over-rqvae-for-semantic-ids.md))
+- **Multimodal FOSS encoders** (offline → parquet): ModernBERT (text), Qwen3-VL-Embedding (image),
+  TRELLIS.2 SLAT (mesh), LAION-CLAP (audio), rf-detr + SOMA-X/ANNY (body phenotype).
+  ([decision](decisions/20260712-multimodal-foss-encoder-stack.md))
+- **ETNF parquet feature store** — one relation per `lake/*.parquet`, deterministic UUIDv5 keys.
+  ([decision](decisions/20260712-parquet-feature-store-etnf.md))
+- Citations in **CFF** ([`CITATION.cff`](CITATION.cff)); decisions as **MADR** records.
 
-1. Clone the repository:
+## Layout
+
+```
+vsk_recsys/
+  data/       ETNF keys + parquet feature store (data.etnf: UUIDv5 identity)
+  encoders/   multimodal item encoders → fused vector (modality registry + Protocol)
+  quantizer/  FSQ semantic-ID quantizer (ResidualFSQ wrapper)
+  model/      Transformer decoder over semantic-ID sequences (i2i next-item)
+  train/      training entrypoints (phase1_movielens)
+  eval/       Recall@K / MRR@K metrics
+tests/        stdlib-only tests (test_etnf, test_metrics)
+decisions/    MADR decision log + prior exploration notes
+plans/        taskweft HTN domain that sequences the migration
+```
+
+## Environment (pixi)
 
 ```bash
-git clone https://github.com/V-Sekai-fire/vsk-session-item-recommendation-01
-cd movie-recommendation-pinsage
+pixi install
+pixi run metrics-test     # python -m tests.test_metrics
+pixi run etnf-test        # python -m tests.test_etnf
+pixi run phase1           # MovieLens parity (WIP)
 ```
 
-2. Install Mac or Linux requirements:
+The stdlib-only modules (`vsk_recsys.data.etnf`, `vsk_recsys.eval.metrics`) also run under a bare
+Python 3.11 without the ML stack:
 
 ```bash
-"${SHELL}" <(curl -L micro.mamba.pm/install.sh)
-source ~/.bashrc
-micromamba create -n pinsage python==3.12
-micromamba activate pinsage
-micromamba install llvm scipy requests scikit-learn transformers pandas
-pip3 install librecommender tf-keras tensorflow[and-cuda]
-pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
-python3 -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))"
+python -m tests.test_etnf && python -m tests.test_metrics
 ```
 
-## Usage
+Phase 2 heavy encoders (TRELLIS.2, Qwen3-VL-Embedding, LAION-CLAP, rf-detr) are Linux + CUDA and are
+installed separately from the light, cross-platform Phase 1 env.
 
-1. Run the script:
+## Task orchestration (taskweft HTN)
 
-```bash
-python recommend.py # Try decreasing the train/test split to 0.95 for faster results and worse performance.
-```
+Execution order is planned by [`multiplayer-fabric-taskweft`](https://github.com/V-Sekai-fire/multiplayer-fabric-taskweft)
+(MIT), an HTN planner registered as an MCP server. The migration is encoded as
+[`plans/migration.domain.jsonld`](plans/migration.domain.jsonld); the planner emits the ordered
+remaining work (`plan` tool / `taskweft plan plans/migration.domain.jsonld`). `done/*` flags in the
+domain track completed steps.
 
-2. Expected Output:
+## Status
 
-```
-* 8 hours to train
-• Automatic dataset download and extraction
-• Training logs with evaluation metrics (precision/recall)
-• Example prediction for user 1
-• Top 7 movie recommendations with titles
-```
-
-## Data Processing Pipeline
-
-1. Downloads MovieLens 20M dataset
-2. Merges ratings and movie metadata
-3. Normalizes ratings (0-1 scale)
-4. Processes multi-value genre features
-5. Creates chronological train/test split (80/20)
-
-## Model Configuration
-
-- **Algorithm**: PinSage (graph neural network)
-- **Task**: Ranking with max-margin loss
-- **Embedding Size**: 16
-- **Training**: 2 epochs, 16,384 batch size
-- **Negative Sampling**: 3 negatives per positive
-- **Graph Parameters**: 2 layers, 3 neighbors per node
+- **Phase 0** — decision records, `CITATION.cff`, pixi env, package scaffold, metrics/keys tests. ✔
+- **Phase 1** — MovieLens parity (FSQ + Transformer vs PinSage baseline). ▢ in progress
+- **Phase 2** — Godot multimodal encoders + ETNF store + cold-start validation. ▢
 
 ## License
 
-MIT License - See [LICENSE](LICENSE) for details.
-
-## Acknowledgments
-
-- MovieLens dataset from GroupLens Research
-- LibRecommender library
-- TensorFlow ecosystem
-
-This implementation demonstrates modern recommendation system techniques using graph neural networks, suitable for both educational purposes and as a foundation for production systems.
+MIT — see [LICENSE](LICENSE).
