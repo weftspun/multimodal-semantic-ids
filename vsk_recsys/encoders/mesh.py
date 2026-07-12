@@ -177,6 +177,8 @@ def encode_texture_to_slat(asset, tex_encoder, grid_size: int = 64, device: str 
         a = attributes[k]
         parts.append(a if a.ndim == 2 else a[:, None])
     feats = torch.cat(parts, dim=-1).float()  # (N, 6)
+    if feats.numel() == 0:  # geometry-only mesh (no PBR texture / vertex colors) -> no texture tokens
+        return torch.zeros((0, 32)), torch.zeros((0, 3), dtype=torch.int32)
     feats = feats / 255.0 * 2 - 1 if feats.max() > 1.5 else feats * 2 - 1  # -> [-1, 1]
     cb = torch.cat([torch.zeros_like(voxel_indices[:, 0:1]), voxel_indices], dim=-1).int()
     x = sp.SparseTensor(feats, cb)
