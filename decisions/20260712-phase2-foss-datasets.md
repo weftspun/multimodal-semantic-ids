@@ -29,7 +29,7 @@ against the HF API on 2026-07-12; only OSI/permissive or CC-BY/CC0/ODC-BY qualif
 | **Audio**                 | `agkphysics/AudioSet`                                       | **CC-BY-4.0** | For the LAION-CLAP audio encoder.                                  |
 | Audio (Freesound/LAION)   | `benjamin-paine/freesound-laion-640k-commercial-16khz-full` | **CC-BY-4.0** | Commercial-safe Freesound/LAION-audio.                             |
 | **Phenotype: facial expression** | `nadizik/synthetic-human-expressions-poses-3d`      | **CC-BY-4.0** | Synthetic human **facial-expression** renders (FACS controls + camera + breathing + eye-gaze) — **NOT body skeleton**. Ingested to ETNF: `assets_poses` + `asset_pose_meta` (`vsk_recsys/data/nadizik.py`; 10,075 renders, 26 motions, 4 quality buckets). rf-detr keypoints run on these renders. |
-| **Phenotype: body motion** (NEEDED, TBD) | *unsourced — FOSS, non-SMPL*                | *TBD*         | Full-**body skeleton** motion/poses for the COCO-17 → `somaxc` → ANNY *body* retarget. The facial set does not cover the body skeleton, so a separate body-motion source is required. Must clear the FOSS gate: avoid SMPL/SMPL-X-derived (AMASS, BEDLAM, AGORA are non-commercial/gated) and AGPL (YOLO-pose). Options: **generate from ANNY/somaxc** (the closed loop — pose ANNY → render → rf-detr COCO-17 → retarget), or a CC-BY/CC0 synthetic body-pose set. |
+| **Phenotype: body motion** | **AddBiomechanics** → `sinew-mocap/mount-drift` `calibrator-v1` `caldata_{train,test}_jc.parquet` | **CC-BY-4.0** | Real body-**skeleton** jointCenters + anthropometrics for the COCO-17 → `somaxc` → ANNY *body* retarget (and the `Anthropometry.lean` bone-length solve). Columns: `subject/study/source`, `recorded_sex`, `height_m`, `mass_kg`, `seglen_m` (10 segment lengths), `x` (7200 windowed jointCenters), `y` (180 per-frame). **Use the `With_Arm` Rajagopal variant** (arms required for COCO-17; AddBiomechanics notes much of its data lacks arm markers) and **filter feminine** subjects (test set is 9,373/11,794 female). Already parquet (zstd-internal). AddBiomechanics is CC-BY (attribution via LICENSE.txt uploader credits); NOT SMPL — clears the FOSS gate. Local raw `.b3d`: `O:\addb-all\{train,test}\With_Arm\`. Superbuild has no photos (skeletal mocap only). |
 
 **Rejected (not FOSS):** `ShapeNet/ShapeNetCore` (license "other", gated/manual); `laion/relaion2B-en-
 research-safe` and `laion/laion2B-en-aesthetic` (license unknown — URL lists with mixed image rights);
@@ -64,4 +64,10 @@ prefer the CC-BY image/audio alternatives.
   separate FOSS **body-motion** dataset is still required (see the two phenotype rows). Also note: the Godot
   corpus has **no human assets** (stylized robots/creatures + 1 mannequin), so rf-detr keypoints run on the
   human datasets, NOT the Godot proxy — correcting the "Godot character meshes → phenotype" note above.
+- **Body-motion pipeline = collapse mocap onto ANNY, then synthesize** (2026-07-12): the raw
+  AddBiomechanics jointCenters are heterogeneous skeletons, so **retarget/collapse them ALL onto the
+  canonical ANNY skeleton via `somaxc`** (one rig for every source), then **generate synthetic data** —
+  pose ANNY in the collapsed motions → render (viser) → rf-detr COCO-17 → the body keypoint/phenotype set.
+  This is the body-side twin of how `nadizik` synthesized facial data: controllable, canonical, FOSS, and
+  it exercises the whole `somaxc` retarget. Feminine + `With_Arm` subjects only.
 - ODC-BY / per-object Objaverse licenses require attribution and per-object filtering for redistribution.
