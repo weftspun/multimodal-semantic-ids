@@ -3,7 +3,7 @@
   "domain": "plans/migration.domain.jsonld",
   "note": "Done: enc_text (395 scenes), enc_mesh (31 shape+texture), enc_image (31 viser/three.js renders -> Qwen), encoders, store (assets=426, FK-verified, training_features view). DEFERRED: enc_phenotype (blocked on ../anny_litert ANNY model absent + rf-detr is detection-only) and audio. NEXT: a_p2_uro_backpack, which needs real V-Sekai uro interaction data (not present).",
   "ordered_plan": [
-    {"action": "a_p2_uro_backpack",       "platform": "any",     "hours": 1.0,  "milestone": "A", "blocked_on": "real uro (Uro.Inventory.Backpack) interaction data"},
+    {"action": "a_p2_uro_backpack",       "platform": "any",     "hours": 1.0,  "milestone": "A", "status": "ingestion BUILT + tested (vsk_recsys/data/uro.py, tests/test_uro.py); pending only real uro interaction data (data-swap, not code)"},
     {"action": "a_p2_i2i",                "platform": "any",     "hours": 0.5,  "milestone": "A"},
     {"action": "a_p2_coldstart",          "platform": "any",     "hours": 0.25, "milestone": "A"},
     {"action": "a_p2_mesh_slang_linux",   "platform": "linux",   "hours": 4.0,  "milestone": "B"},
