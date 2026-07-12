@@ -32,6 +32,12 @@ Chosen per modality (rejected alternatives noted):
   the same space (better fusion; the "unified, not siloed" principle also applied to CLAP). The companion
   **Qwen3-VL-Reranker** (Apache-2.0) feeds the retriever→ranker stage (`decisions/session_recommendation_06.md`).
   Slim fallback if inference cost demands: SigLIP-2 ViT + 2×2 merger → mean-pool for image only.
+  **CONCRETE (2026-07-12):** use **`Qwen/Qwen3-VL-Embedding-2B`** (smallest, ungated) via **sentence-
+  transformers** — text encoding is `SentenceTransformer(...).encode()`, no repo vendoring (`vsk_recsys/
+  encoders/multimodal.py::Qwen3VLEncoder`, `scripts/encode_text.py`). **Load fp16 + `max_seq_length=1024`**
+  — the fp32 / 262 144-max default is ~1000× slower (661 s vs 0.7 s per batch of 8) on verbose `.tscn` text;
+  output dim 2048. Image/mixed inputs use the model's `Qwen3VLEmbedder` script path (later). Default-env deps:
+  `pillow` + `torchvision` (the Qwen3-VL processor/video-processor require them).
 - **Mesh**: **TRELLIS.2** (MIT, weights MIT) — encode to SLAT via its Sparse-3D VAE, canonical-
   normalize orientation/scale, then pool to a fixed vector. **FOSS gate RESOLVED (2026-07-12): PASSES.**
   The encode path `mesh → o-voxel (mesh_to_flexible_dual_grid) → .vxz → shape encoder (SC-VAE) → SLAT`

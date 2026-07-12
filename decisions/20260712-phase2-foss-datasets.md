@@ -51,4 +51,11 @@ prefer the CC-BY image/audio alternatives.
 - (-) The 3D/audio/body datasets still lack sessions; if mixed in, fall back to content-similarity
   co-occurrence. The Godot proxy corpus is small (~394 scenes) — fine for a proof-of-stack + cold-start
   demo, not large-scale training (real scale comes from uro backpacks).
+- (-) **Godot `project=session` is too sparse for *sequential* training** — ~2.9 scenes/project, so most
+  sessions are length-2 (the "drop < 3" rule would drop most). **Decision (2026-07-12): pause the pure-text
+  Godot recommender training; exercise the OTHER modality encoders (mesh, image, phenotype) on real content
+  first and build the multimodal ETNF relations, and defer sequential-recommender training (`a_p2_i2i`)
+  until real interaction data (uro backpacks) exists.** Content-derived semantic IDs still give cold-start
+  regardless. The Godot corpus's real 3D meshes (31 `.glb`/`.gltf`/`.obj`, incl. character models →
+  phenotype path) feed the mesh encoder now.
 - ODC-BY / per-object Objaverse licenses require attribution and per-object filtering for redistribution.
