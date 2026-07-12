@@ -37,7 +37,11 @@ Chosen per modality (rejected alternatives noted):
   imports only `torch, numpy, o_voxel, trellis2.models` (o-voxel `pyproject.toml` deps = `torch, numpy`;
   its rasterizer uses o-voxel's own `_C` CUDA ext). `nvdiffrast`/`nvdiffrec` appear ONLY in the output/
   decode side (`postprocess.to_glb`, `mesh_renderer`, `pbr_mesh_renderer`, `trellis2_texturing`), which
-  we do not use. Remaining constraint: Linux + CUDA (o-voxel `_C` compilation).
+  we do not use. **Windows-runnable** via the MIT fork `IgorAherne/TRELLIS.2-stableprojectorz`, which
+  ships **prebuilt Windows wheels** for o-voxel/flexgemm (Python 3.11, CUDA 12.8, Torch 2.8 ≈ our cu128
+  setup); mesh→O-Voxel voxelization is CPU-capable (~10s), only the shape-VAE encode wants the GPU. No
+  Linux box or nvdiffrast required. (ONNX export of the shape VAE is a later deployment-portability
+  option; it would not cover the native o-voxel voxelization kernel, so it is not needed now.)
 - **Audio**: **LAION-CLAP** (Apache-2.0) — shared text↔image↔audio space (cross-modal, not an acoustic
   silo). Rejected: **Microsoft msclap** (MS-PL — OSI but non-standard/copyleft-ish).
 - **Body phenotype** (an **item** feature for humanoid/character assets): **rf-detr** 2D COCO keypoints
@@ -53,5 +57,6 @@ Fused modality vector → `ResidualFSQ` → per-asset semantic ID.
 - (+) Fully FOSS, cross-modal, cold-start-capable item representation.
 - (+) Each encoder is an independent offline job writing one ETNF relation.
 - (-) rf-detr gives 2D keypoints → single-view 2D→3D fit is depth-ambiguous → approximate phenotype.
-- (-) TRELLIS.2 is a heavy, Linux/CUDA-only dependency (o-voxel `_C` extension); the nvdiffrast FOSS
-  gate was checked and passes for the encode path (see above).
+- (-) TRELLIS.2 is a heavy CUDA dependency (o-voxel `_C` extension), but **runs on Windows** via the
+  MIT `stableprojectorz` fork's prebuilt wheels (no Linux required); nvdiffrast FOSS gate passes for the
+  encode path (see above).
