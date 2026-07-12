@@ -54,10 +54,16 @@ Chosen per modality (rejected alternatives noted):
   (a) **deterministic** — the VAE encoder returns the posterior mean (`sample_posterior=False`, `.eval()`);
   repeated encodes diff = 0.0, so same asset → same codes. (b) **NO mean/average pooling** — the SLAT is
   a *structured* per-voxel latent; we keep the `(N, 32)` tokens + coords and **FSQ-quantize each token**
-  into mesh semantic codes downstream (a mesh contributes a *set* of codes, like text/image), preserving
-  geometry structure. **Geometry-only for now** (`shape_enc`); full SLAT = **shape ⊕ texture** — add
-  `tex_enc` (PBR/materials via the textured voxelization `textured_mesh_to_volumetric_attr`) for
-  appearance. Recipe in `vsk_recsys/encoders/mesh.py::encode_to_slat` + `scripts/mesh_encode_linux.py`.
+  into mesh semantic codes downstream (a mesh contributes an *ordered set* of codes, like text/image),
+  preserving structure. (c) **token order matters** — ordered by O-Voxel's **vetted** `serialize.encode_seq(
+  mode="hilbert")` `_C` kernel (verified true Hilbert: all consecutive steps = 1.0 on a dense grid, vs
+  z-order 1.44/max-jump 9.95). Not matching any reference (sparse-conv encoder is order-independent), so
+  Hilbert chosen for locality; a hand-rolled Hilbert was buggy → always use O-Voxel's `_C`. (d) **full
+  mesh = shape ⊕ texture** — `shape_enc` (geometry) AND `tex_enc` (`SparseUnetVaeEncoder`, 6-ch PBR
+  `[base_color,metallic,roughness,alpha]` via `textured_mesh_to_volumetric_attr`) both VERIFIED (textured
+  box → shape (56,32) + texture (56,32), deterministic). Recipe in `vsk_recsys/encoders/mesh.py`
+  (`encode_to_slat` / `encode_texture_to_slat` / `canonical_order`) + `scripts/mesh_encode_linux.py`
+  (writes `asset_mesh_{shape,texture}_slat` ETNF relations).
 - **Audio**: **LAION-CLAP** (Apache-2.0) — shared text↔image↔audio space (cross-modal, not an acoustic
   silo). Rejected: **Microsoft msclap** (MS-PL — OSI but non-standard/copyleft-ish).
 - **Body phenotype** (an **item** feature for humanoid/character assets): **rf-detr** 2D COCO keypoints

@@ -99,50 +99,34 @@ def load_shape_encoder(weights_prefix: str, trellis2_path: str, device: str = "c
     return models.from_pretrained(weights_prefix).eval().to(device)
 
 
-def _spread3(v):
-    """Interleave low 21 bits of v with 2 zero bits between each (Morton bit-spread)."""
-    v = v.long() & 0x1FFFFF
-    v = (v | (v << 32)) & 0x1F00000000FFFF
-    v = (v | (v << 16)) & 0x1F0000FF0000FF
-    v = (v | (v << 8)) & 0x100F00F00F00F00F
-    v = (v | (v << 4)) & 0x10C30C30C30C30C3
-    v = (v | (v << 2)) & 0x1249249249249249
-    return v
+def canonical_order(coords, mode: str = "hilbert"):
+    """Argsort (N,3) voxel coords into O-Voxel's **vetted** canonical order.
 
-
-def morton_order(coords):
-    """Argsort voxel coords into Morton (Z-order). Kept for reference; ``hilbert_order`` is preferred."""
+    Uses `o_voxel.serialize.encode_seq` (the `_C` implementation). ``mode="hilbert"`` is a *true* 3D
+    Hilbert curve — verified: all consecutive steps = 1.0 on a dense grid (strictly better locality than
+    z-order's avg 1.44 / max-jump 9.95). ``mode="z_order"`` is Morton. Token order matters for the
+    downstream sequence model; we are NOT matching any reference (the sparse-conv encoder is
+    order-independent), so we choose Hilbert for locality. (My earlier hand-rolled Hilbert was buggy —
+    always prefer O-Voxel's `_C` version.)
+    """
     import torch
 
-    code = _spread3(coords[:, 0]) | (_spread3(coords[:, 1]) << 1) | (_spread3(coords[:, 2]) << 2)
-    return torch.argsort(code)
+    load_voxelizer()  # registers the bare o_voxel package
+    import o_voxel.serialize as serialize
 
-
-def hilbert_order(coords):
-    """3D Hilbert order — better locality than Morton on DENSE grids, marginal on sparse SLAT.
-
-    NOTE: a hand-rolled Skilling implementation failed the defining dense-grid test (correct 3D Hilbert
-    has all consecutive steps = 1.0). For a production Hilbert order use the vetted MIT ``hilbertcurve``
-    library (``HilbertCurve(p=bits, n=3).distances_from_points``) and argsort the distances. We are NOT
-    matching any reference (the sparse-conv encoder is order-independent), so this is a pure quality
-    choice; measured on sparse SLAT the Morton/Hilbert difference is marginal, so ``encode_to_slat``
-    uses the correct ``morton_order`` by default.
-    """
-    raise NotImplementedError(
-        "Use morton_order (correct) or wire the vetted MIT `hilbertcurve` lib; see docstring."
-    )
+    return torch.argsort(serialize.encode_seq(coords.int(), mode=mode))
 
 
 def encode_to_slat(vertices, faces, encoder, grid_size: int = 64, device: str = "cuda"):
-    """Mesh -> O-Voxel -> **structured, Morton-ordered** SLAT. Returns ``(feats, coords)``, NOT pooled.
+    """Mesh -> O-Voxel -> **structured, Hilbert-ordered** SHAPE SLAT. Returns ``(feats, coords)``, NOT pooled.
 
-    ``feats``: (N, C) — N structured SLAT tokens (one per active voxel), C latent channels (32 for the
-    shape VAE). ``coords``: (N, 3) — the voxel coordinates. **No mean/average pooling** — averaging would
-    destroy structure. Tokens are returned in **canonical Morton (Z-order)** so the sequence is
-    deterministic AND spatially coherent (order of SLAT tokens matters for the sequence model). Downstream,
-    each SLAT token is FSQ-quantized into a semantic code, so the mesh contributes an *ordered set* of
-    codes (like text/image). Deterministic: the VAE returns the posterior mean (``sample_posterior=False``,
-    ``.eval()``); repeated encodes diff = 0.0.
+    ``feats``: (N, 32) — N structured shape-SLAT tokens (one per active voxel). ``coords``: (N, 3) — voxel
+    coords. **No mean/average pooling** — averaging destroys structure. Tokens are ordered by O-Voxel's
+    vetted **Hilbert** curve (order matters for the sequence model; better locality than z-order).
+    Downstream, each token is FSQ-quantized into a semantic code, so the mesh contributes an *ordered set*
+    of codes (like text/image). Deterministic: the VAE returns the posterior mean (``sample_posterior=False``,
+    ``.eval()``); repeated encodes diff = 0.0. This is GEOMETRY only — see ``encode_texture_to_slat`` for the
+    PBR/appearance half (full mesh = shape ⊕ texture).
     """
     import torch
 
@@ -162,5 +146,43 @@ def encode_to_slat(vertices, faces, encoder, grid_size: int = 64, device: str = 
         z = encoder(verts.to(device), inter_st.to(device))  # posterior mean; deterministic
     feats = z.feats.float().cpu()
     coords = z.coords[:, 1:].cpu()
-    order = morton_order(coords)  # correct canonical Z-order (deterministic); order of tokens matters
-    return feats[order], coords[order]  # (N, C) structured tokens + (N, 3) coords, Morton-ordered
+    order = canonical_order(coords, mode="hilbert")  # O-Voxel's vetted Hilbert; token order matters
+    return feats[order], coords[order]  # (N, C) structured shape tokens + (N, 3) coords, Hilbert-ordered
+
+
+# `load_shape_encoder` is generic (from_pretrained reads the model name from the config), so it also
+# loads the texture encoder — alias for clarity.
+load_texture_encoder = load_shape_encoder
+
+
+def encode_texture_to_slat(asset, tex_encoder, grid_size: int = 64, device: str = "cuda"):
+    """Textured mesh -> PBR volumetric attrs -> **structured, Hilbert-ordered** TEXTURE SLAT.
+
+    ``asset``: a ``trimesh.Scene``/``Trimesh`` (or glb path) WITH PBR materials/textures. Uses O-Voxel's
+    ``textured_mesh_to_volumetric_attr`` to sample per-voxel PBR = ``[base_color(3), metallic, roughness,
+    alpha]`` (6 channels, normalized to [-1, 1]), then the ``SparseUnetVaeEncoder`` (`tex_enc`). Returns
+    ``(feats, coords)`` — (N, 32) structured texture tokens + coords, Hilbert-ordered, no pooling. The full
+    mesh representation is the shape tokens ⊕ these texture tokens.
+    """
+    import torch
+
+    convert = load_voxelizer()
+    import trellis2.modules.sparse as sp
+
+    voxel_indices, attributes = convert.textured_mesh_to_volumetric_attr(
+        asset, grid_size=grid_size, aabb=[[-0.5, -0.5, -0.5], [0.5, 0.5, 0.5]]
+    )
+    parts = []
+    for k in ("base_color", "metallic", "roughness", "alpha"):
+        a = attributes[k]
+        parts.append(a if a.ndim == 2 else a[:, None])
+    feats = torch.cat(parts, dim=-1).float()  # (N, 6)
+    feats = feats / 255.0 * 2 - 1 if feats.max() > 1.5 else feats * 2 - 1  # -> [-1, 1]
+    cb = torch.cat([torch.zeros_like(voxel_indices[:, 0:1]), voxel_indices], dim=-1).int()
+    x = sp.SparseTensor(feats, cb)
+    with torch.no_grad():
+        z = tex_encoder(x.to(device))  # single-input (unlike the shape encoder); posterior mean
+    tf = z.feats.float().cpu()
+    tc = z.coords[:, 1:].cpu()
+    order = canonical_order(tc, mode="hilbert")
+    return tf[order], tc[order]

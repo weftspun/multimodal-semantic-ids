@@ -23,41 +23,56 @@ import pyarrow.parquet as pq
 import torch
 import trimesh
 
+import os
+
 from vsk_recsys.data.etnf import asset_uuid
-from vsk_recsys.encoders.mesh import encode_to_slat, load_shape_encoder
+from vsk_recsys.encoders.mesh import (
+    encode_texture_to_slat,
+    encode_to_slat,
+    load_shape_encoder,
+    load_texture_encoder,
+)
+
+
+def _row(path, feats, coords):
+    return {
+        "asset_uuid": str(asset_uuid(path)),
+        "natural_key": path,
+        "n_tokens": int(feats.shape[0]),
+        "slat_feats": feats.numpy().tolist(),  # (N, 32) structured tokens — NO pooling
+        "slat_coords": coords.numpy().tolist(),  # (N, 3) voxel coords, Hilbert-ordered
+    }
 
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--meshes", required=True, help="glob of mesh files (.glb/.obj/.ply)")
-    ap.add_argument("--weights", required=True, help="prefix to shape_enc.{json,safetensors}")
+    ap.add_argument("--shape-weights", required=True, help="prefix to shape_enc.{json,safetensors}")
+    ap.add_argument("--tex-weights", required=True, help="prefix to tex_enc.{json,safetensors}")
     ap.add_argument("--trellis2", required=True, help="path to the trellis2 repo")
-    ap.add_argument("--out", default="lake/asset_mesh_embedding.parquet")
+    ap.add_argument("--out-dir", default="lake")
     ap.add_argument("--grid-size", type=int, default=64)
     args = ap.parse_args()
 
-    enc = load_shape_encoder(args.weights, args.trellis2)
-    rows = []
+    senc = load_shape_encoder(args.shape_weights, args.trellis2)
+    tenc = load_texture_encoder(args.tex_weights, args.trellis2)
+    shape_rows, tex_rows = [], []
     for path in sorted(glob.glob(args.meshes)):
-        m = trimesh.load(path, force="mesh")
-        v = torch.as_tensor(m.vertices, dtype=torch.float32)
-        f = torch.as_tensor(m.faces, dtype=torch.int32)
-        feats, coords = encode_to_slat(v, f, enc, grid_size=args.grid_size)  # STRUCTURED — no pooling
-        rows.append(
-            {
-                "asset_uuid": str(asset_uuid(path)),
-                "natural_key": path,
-                "n_tokens": int(feats.shape[0]),
-                "slat_feats": feats.numpy().tolist(),   # (N, C) structured SLAT tokens
-                "slat_coords": coords.numpy().tolist(),  # (N, 3) voxel coords
-            }
-        )
-        print(f"  {path} -> SLAT {tuple(feats.shape)} tokens (structured, no pooling)", flush=True)
+        asset = trimesh.load(path)  # Scene with PBR materials (for texture)
+        mesh = asset.to_mesh() if hasattr(asset, "to_mesh") else asset
+        v = torch.as_tensor(mesh.vertices, dtype=torch.float32)
+        f = torch.as_tensor(mesh.faces, dtype=torch.int32)
+        sf, sc = encode_to_slat(v, f, senc, grid_size=args.grid_size)  # geometry
+        tf, tc = encode_texture_to_slat(asset, tenc, grid_size=args.grid_size)  # PBR/appearance
+        shape_rows.append(_row(path, sf, sc))
+        tex_rows.append(_row(path, tf, tc))
+        print(f"  {path} -> shape {tuple(sf.shape)} + texture {tuple(tf.shape)}", flush=True)
 
-    # ETNF 1:1 derived-extension relation `asset_mesh_slat` keyed by asset_uuid; downstream FSQ
-    # quantizes each SLAT token into mesh semantic codes (no mean/average).
-    pq.write_table(pa.Table.from_pylist(rows), args.out)
-    print(f"wrote {len(rows)} assets -> {args.out}")
+    os.makedirs(args.out_dir, exist_ok=True)
+    # Two ETNF 1:1 derived-extension relations keyed by asset_uuid (full mesh = shape ⊕ texture).
+    pq.write_table(pa.Table.from_pylist(shape_rows), os.path.join(args.out_dir, "asset_mesh_shape_slat.parquet"))
+    pq.write_table(pa.Table.from_pylist(tex_rows), os.path.join(args.out_dir, "asset_mesh_texture_slat.parquet"))
+    print(f"wrote {len(shape_rows)} assets -> {args.out_dir}/asset_mesh_{{shape,texture}}_slat.parquet")
 
 
 if __name__ == "__main__":
