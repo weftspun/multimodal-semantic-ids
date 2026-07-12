@@ -17,6 +17,39 @@ from vsk_recsys.data.etnf import asset_uuid, session_uuid
 from vsk_recsys.data.lake import check_fk, write_relation
 
 MAX_SCENE_TEXT = 20000  # cap per-scene text (the encoder truncates anyway)
+MESH_EXTENSIONS = (".glb", ".gltf", ".obj", ".ply")
+
+
+def mesh_asset_uuid(rel: str) -> str:
+    """Stable content key for a mesh asset from its corpus-relative path (matches the scene convention).
+
+    The mesh SLAT + render encoders MUST key their relations with this so the ETNF foreign keys resolve
+    into ``assets``. Using the relative path (not an absolute ``/mnt/c/...`` path) keeps keys portable.
+    """
+    return str(asset_uuid(f"godot_mesh:{rel}"))
+
+
+def discover_mesh_files(root: Path) -> list[Path]:
+    """Return sorted mesh files under ``root`` (recursive), skipping Godot's ``.godot`` import cache."""
+    found = [p for p in root.rglob("*") if p.suffix.lower() in MESH_EXTENSIONS and ".godot" not in p.parts]
+    return sorted(found)
+
+
+def mesh_assets(root: str) -> list[dict]:
+    """Build ``assets`` rows (kind=``mesh_asset``) for every mesh file in the corpus.
+
+    Registers the meshes as first-class assets so the mesh/image feature relations have a parent row to
+    reference (they are a different asset population than the ``godot_scene`` rows).
+    """
+    root = Path(root)
+    rows = []
+    for path in discover_mesh_files(root):
+        rel = path.relative_to(root).as_posix()
+        rows.append({
+            "asset_uuid": mesh_asset_uuid(rel), "natural_key": rel, "kind": "mesh_asset",
+            "display_name": path.stem, "slug": rel, "scene_text": None,
+        })
+    return rows
 
 
 def _projects(root: Path) -> list[Path]:

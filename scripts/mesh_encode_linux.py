@@ -25,7 +25,7 @@ import trimesh
 
 import os
 
-from vsk_recsys.data.etnf import asset_uuid
+from vsk_recsys.data.godot import mesh_asset_uuid
 from vsk_recsys.encoders.mesh import (
     encode_texture_to_slat,
     encode_to_slat,
@@ -34,10 +34,11 @@ from vsk_recsys.encoders.mesh import (
 )
 
 
-def _row(path, feats, coords):
+def _row(rel, feats, coords):
+    # Key by the corpus-relative path so the FK resolves into the registered mesh_asset in `assets`.
     return {
-        "asset_uuid": str(asset_uuid(path)),
-        "natural_key": path,
+        "asset_uuid": mesh_asset_uuid(rel),
+        "natural_key": rel,
         "n_tokens": int(feats.shape[0]),
         "slat_feats": feats.numpy().tolist(),  # (N, 32) structured tokens — NO pooling
         "slat_coords": coords.numpy().tolist(),  # (N, 3) voxel coords, Hilbert-ordered
@@ -55,34 +56,34 @@ def main() -> None:
     args = ap.parse_args()
 
     import os
+    from pathlib import Path
 
-    if os.path.isdir(args.meshes):  # a directory → scan for mesh files recursively
-        paths = []
-        for ext in ("glb", "gltf", "obj", "ply"):
-            paths += glob.glob(os.path.join(args.meshes, "**", f"*.{ext}"), recursive=True)
-    else:  # a glob pattern (or single file)
-        paths = glob.glob(args.meshes, recursive=True)
-    paths = sorted(p for p in paths if ".godot" not in p and os.path.isfile(p))  # skip import cache/dirs
+    from vsk_recsys.data.godot import discover_mesh_files
+
+    # --meshes is the corpus root; rel paths (relative to it) become the stable asset keys.
+    root = Path(args.meshes)
+    paths = [str(p) for p in discover_mesh_files(root)]
 
     senc = load_shape_encoder(args.shape_weights, args.trellis2)
     tenc = load_texture_encoder(args.tex_weights, args.trellis2)
     shape_rows, tex_rows = [], []
     skipped = []
     for path in paths:
+        rel = os.path.relpath(path, root).replace(os.sep, "/")
         try:
             asset = trimesh.load(path)  # Scene with PBR materials (for texture)
             mesh = asset.to_mesh() if hasattr(asset, "to_mesh") else asset
             v = torch.as_tensor(mesh.vertices, dtype=torch.float32)
             f = torch.as_tensor(mesh.faces, dtype=torch.int32)
             sf, sc = encode_to_slat(v, f, senc, grid_size=args.grid_size)  # geometry (always)
-            shape_rows.append(_row(path, sf, sc))
+            shape_rows.append(_row(rel, sf, sc))
         except Exception as e:  # a bad mesh must not abort the whole corpus run
             skipped.append((path, f"shape: {e}"))
             print(f"  SKIP {path} (shape failed): {e}", flush=True)
             continue
         try:
             tf, tc = encode_texture_to_slat(asset, tenc, grid_size=args.grid_size)  # PBR/appearance
-            tex_rows.append(_row(path, tf, tc))
+            tex_rows.append(_row(rel, tf, tc))
             print(f"  {path} -> shape {tuple(sf.shape)} + texture {tuple(tf.shape)}", flush=True)
         except Exception as e:  # geometry-only meshes / texture-decode issues keep their shape tokens
             print(f"  {path} -> shape {tuple(sf.shape)} + texture SKIPPED: {e}", flush=True)
