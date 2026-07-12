@@ -60,5 +60,19 @@ easydict = "*"
 zstandard = "*"
 triton-windows = "*"   # Windows triton port — flex_gemm sparse-conv backend needs triton (Stage 2)
 
+# --- Phenotype keypoints: rf-detr (Apache-2.0 base tier) isolated because its CV deps
+# re-solve + break the default env's PIL. RFDETRKeypointPreview -> raw COCO-17 -> somaxc
+# retarget (sinew-mocap/solve). See decisions/20260712-multimodal-foss-encoder-stack.md.
+[feature.rfdetr]
+platforms = ["win-64"]
+
+[feature.rfdetr.dependencies]
+python = "3.11.*"
+
+[feature.rfdetr.pypi-dependencies]
+rfdetr = ">=1.8.3,<2"
+pyarrow = ">=17"
+
 [environments]
 mesh = { features = ["mesh"], no-default-feature = true }
+rfdetr = { features = ["rfdetr"], no-default-feature = true }
