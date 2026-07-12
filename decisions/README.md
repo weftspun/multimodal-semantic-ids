@@ -17,3 +17,4 @@ notes, prototypes, and schema sketches) that led to the decisions below; they ar
 | 2026-07-12 | baseline         | accepted | [Multimodal FOSS encoder stack (text/image/mesh/audio/phenotype)](20260712-multimodal-foss-encoder-stack.md)                                  |
 | 2026-07-12 | baseline         | accepted | [Parquet feature store in Essential Tuple Normal Form (ETNF)](20260712-parquet-feature-store-etnf.md)                                         |
 | 2026-07-12 | proof of concept | accepted | [Phase 2 FOSS datasets — one verified dataset per modality](20260712-phase2-foss-datasets.md)                                                 |
+| 2026-07-12 | stretch          | proposed | [Replace TRELLIS.2 CUDA mesh VAE with a Slang-shader + Lean 4 encoder](20260712-slang-lean4-mesh-vae-over-trellis2-cuda.md)                    |

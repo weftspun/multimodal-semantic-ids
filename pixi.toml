@@ -55,6 +55,7 @@ numpy = "*"
 plyfile = "*"
 easydict = "*"
 zstandard = "*"
+triton-windows = "*"   # Windows triton port — flex_gemm sparse-conv backend needs triton (Stage 2)
 
 [environments]
 mesh = { features = ["mesh"], no-default-feature = true }
