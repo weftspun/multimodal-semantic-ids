@@ -32,8 +32,12 @@ Chosen per modality (rejected alternatives noted):
   packaged as an embedder. Rejected: rolling our own tower (kept as a slim fallback: SigLIP-2 ViT +
   2×2 merger → mean-pool, if inference cost demands).
 - **Mesh**: **TRELLIS.2** (MIT, weights MIT) — encode to SLAT via its Sparse-3D VAE, canonical-
-  normalize orientation/scale, then pool to a fixed vector. **Caveat / open FOSS gate:** confirm the
-  mesh→SLAT *encode* path does not pull in `nvdiffrast`/`nvdiffrec` (NVIDIA non-MIT); Linux + CUDA 12.4.
+  normalize orientation/scale, then pool to a fixed vector. **FOSS gate RESOLVED (2026-07-12): PASSES.**
+  The encode path `mesh → o-voxel (mesh_to_flexible_dual_grid) → .vxz → shape encoder (SC-VAE) → SLAT`
+  imports only `torch, numpy, o_voxel, trellis2.models` (o-voxel `pyproject.toml` deps = `torch, numpy`;
+  its rasterizer uses o-voxel's own `_C` CUDA ext). `nvdiffrast`/`nvdiffrec` appear ONLY in the output/
+  decode side (`postprocess.to_glb`, `mesh_renderer`, `pbr_mesh_renderer`, `trellis2_texturing`), which
+  we do not use. Remaining constraint: Linux + CUDA (o-voxel `_C` compilation).
 - **Audio**: **LAION-CLAP** (Apache-2.0) — shared text↔image↔audio space (cross-modal, not an acoustic
   silo). Rejected: **Microsoft msclap** (MS-PL — OSI but non-standard/copyleft-ish).
 - **Body phenotype** (an **item** feature for humanoid/character assets): **rf-detr** 2D COCO keypoints
@@ -49,5 +53,5 @@ Fused modality vector → `ResidualFSQ` → per-asset semantic ID.
 - (+) Fully FOSS, cross-modal, cold-start-capable item representation.
 - (+) Each encoder is an independent offline job writing one ETNF relation.
 - (-) rf-detr gives 2D keypoints → single-view 2D→3D fit is depth-ambiguous → approximate phenotype.
-- (-) TRELLIS.2 is a heavy 4B, Linux/CUDA-only dependency; nvdiffrast FOSS gate must be confirmed
-  before it is committed.
+- (-) TRELLIS.2 is a heavy, Linux/CUDA-only dependency (o-voxel `_C` extension); the nvdiffrast FOSS
+  gate was checked and passes for the encode path (see above).

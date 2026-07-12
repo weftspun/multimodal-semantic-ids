@@ -19,7 +19,7 @@
       "p1_train": false,
       "p1_eval": false,
       "p1_parity": false,
-      "p2_nvdiffrast_gate": false,
+      "p2_nvdiffrast_gate": true,
       "p2_encoders": false,
       "p2_store": false,
       "p2_i2i": false,
