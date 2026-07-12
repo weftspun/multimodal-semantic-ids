@@ -29,8 +29,32 @@ einops = "*"
 tqdm = "*"
 vsk-recsys = { path = ".", editable = true }
 
-# Phase 2 heavy encoders (Linux + CUDA only) are installed separately, not
-# pinned here, to keep the Phase 1 env light and cross-platform:
-#   Qwen3-VL-Embedding (Apache-2.0), microsoft/TRELLIS.2 (MIT, needs nvdiffrast
-#   FOSS-gate check), LAION-CLAP (Apache-2.0), roboflow/rf-detr (Apache tier),
-#   NVlabs/SOMA-X (+ANNY, Apache-2.0).
+# Phase 2 image/audio/text encoders (Qwen3-VL-Embedding, LAION-CLAP, ModernBERT)
+# run in this default env (torch cu128). The mesh encoder uses the isolated `mesh`
+# environment below (torch 2.8 to match the TRELLIS.2 stableprojectorz wheels).
+
+# --- Phase 2 mesh encoder: isolated env matching the MIT stableprojectorz Windows
+# wheels (torch 2.8 / cu128 / cp311). o_voxel + flex_gemm are pip-installed post-solve
+# via `pixi run -e mesh setup-mesh`. See decisions/20260712-multimodal-foss-encoder-stack.md.
+[feature.mesh]
+platforms = ["win-64"]
+
+[feature.mesh.dependencies]
+python = "3.11.*"
+
+[feature.mesh.pypi-dependencies]
+torch = { version = "==2.8.0", index = "https://download.pytorch.org/whl/cu128" }
+torchvision = { version = "==0.23.0", index = "https://download.pytorch.org/whl/cu128" }
+# MIT stableprojectorz wheels installed by uv as path deps (the mesh env has no pip).
+o-voxel = { path = "vendor/whl/o_voxel-0.0.1-cp311-cp311-win_amd64.whl" }
+flex-gemm = { path = "vendor/whl/flex_gemm-0.0.1-cp311-cp311-win_amd64.whl" }
+trimesh = "*"
+safetensors = "*"
+einops = "*"
+numpy = "*"
+plyfile = "*"
+easydict = "*"
+zstandard = "*"
+
+[environments]
+mesh = { features = ["mesh"], no-default-feature = true }

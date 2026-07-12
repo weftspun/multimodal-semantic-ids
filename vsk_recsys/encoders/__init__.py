@@ -39,7 +39,9 @@ class ModalitySpec:
 # Single source of truth for the modality → encoder → license → ETNF relation mapping,
 # mirroring decisions/20260712-multimodal-foss-encoder-stack.md.
 MODALITIES = {
-    "text": ModalitySpec("text", "ModernBERT", "Apache-2.0", "asset_text_embedding", 1),
+    # Phase 2 text + image share ONE unified encoder (Qwen3-VL-Embedding) — same space, fewer models.
+    # (Phase 1 MovieLens used ModernBERT, kept only there.) Qwen3-VL-Reranker → retriever→ranker stage.
+    "text": ModalitySpec("text", "Qwen3-VL-Embedding", "Apache-2.0", "asset_text_embedding", 2),
     "image": ModalitySpec("image", "Qwen3-VL-Embedding", "Apache-2.0", "asset_image_embedding", 2),
     "mesh": ModalitySpec("mesh", "TRELLIS.2-SLAT", "MIT", "asset_mesh_embedding", 2),
     "audio": ModalitySpec("audio", "LAION-CLAP", "Apache-2.0", "asset_audio_embedding", 2),
