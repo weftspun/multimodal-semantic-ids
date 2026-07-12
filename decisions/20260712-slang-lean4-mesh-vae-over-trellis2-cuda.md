@@ -38,12 +38,15 @@ content embeddings. We do **not** train the mesh VAE and do not need its decoder
 
 ## Decision Outcome
 
-Chosen (proposed): reimplement the **mesh-VAE encoder forward** in **Slang** (MIT, Khronos
-`shader-slang/slang`), which compiles one source to SPIR-V / HLSL / Metal / CPU and has built-in
-auto-diff. Formalize the ops in **Lean 4** following `v-sekai-multiplayer-fabric/materialx-shaders-lean`
-(shaders as verified MaterialX node graphs); drive verified kernel/witness search with
-`fire/plausible-witness-dag` (MIT); read/write the ETNF parquet lake via
-`v-sekai-multiplayer-fabric/lean-duckdb`.
+Chosen (proposed): reimplement the **mesh-VAE encoder forward** as **Slang** compute shaders (MIT,
+Khronos `shader-slang/slang`) — one source compiles to SPIR-V / HLSL / Metal / CPU, with built-in
+auto-diff. **Author and verify the kernels in Lean 4 via `V-Sekai-fire/lean-slang` (MIT)** — it builds
+an in-memory Slang AST in Lean and emits Slang source (`slangc -target spirv`; v0.1.x round-trips
+through `libslang` to SPIR-V at `lake` build time). So the sparse-conv / ResBlock / VAE-bottleneck
+kernels are written and formally checked in Lean, then codegen'd to portable Slang. Supporting stack:
+`v-sekai-multiplayer-fabric/materialx-shaders-lean` (the Lean-shader formalization pattern),
+`fire/plausible-witness-dag` (MIT — verified iterative-deepening kernel/witness search), and
+`v-sekai-multiplayer-fabric/lean-duckdb` (Lean 4 ⇄ ETNF parquet lake I/O).
 
 - **Weights, not retraining.** Port TRELLIS.2's trained MIT shape-encoder weights
   (`shape_enc_next_dc_f16c32_fp16.safetensors`, 709 MB) into the Slang kernels — same architecture,
