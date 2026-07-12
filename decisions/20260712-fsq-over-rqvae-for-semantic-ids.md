@@ -37,7 +37,7 @@ Chosen: **`ResidualFSQ`** from **`lucidrains/vector-quantize-pytorch`** (MIT, ~4
 actively maintained). FSQ has no learned codebook and no aux losses, which removes collapse and
 collision handling entirely; ResidualFSQ adds the coarse→fine multi-level code structure generative
 retrieval wants while keeping FSQ's simplicity. `HKUDS/RecGPT` validates the FSQ-tokenizer + decoder
-pattern for recsys and is used as a *reference design only* (it ships no license — see
+pattern for recsys and is used as a _reference design only_ (it ships no license — see
 [20260712-semantic-id-framework-base-rqvae-recommender]).
 
 ### Consequences

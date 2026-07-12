@@ -22,7 +22,7 @@ Three problems block the V-Sekai goal of recommending user-generated Godot scene
 
 - FOSS-only: OSI-approved permissive licenses (Apache-2.0 / MIT), open weights, no token gate.
 - PyTorch, to match the house stack.
-- Cold-start via *content-derived* item representations (new items usable at inference).
+- Cold-start via _content-derived_ item representations (new items usable at inference).
 - Native multimodal item features.
 
 ## Considered Options

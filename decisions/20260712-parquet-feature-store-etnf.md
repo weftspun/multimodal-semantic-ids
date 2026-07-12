@@ -37,8 +37,8 @@ Chosen: **ETNF-decomposed parquet lake**, one relation per file:
   canonical (allocentric) key means a re-imported/rescaled duplicate resolves to the same UUID.
 - **Many-to-many facts = all-key junctions:** `session_assets (session_uuid, asset_uuid)`,
   `item_graph (source_uuid, target_uuid, cooccurrence_type)`, `user_item_edges (user_uuid, asset_uuid,
-  interaction_type)` — the entire heading is the key.
-- **1:1 derived extensions keyed by `asset_uuid`** — one relation *per modality*, each written by its
+interaction_type)` — the entire heading is the key.
+- **1:1 derived extensions keyed by `asset_uuid`** — one relation _per modality_, each written by its
   own offline encoder job: `asset_text_embedding`, `asset_image_embedding`, `asset_mesh_embedding`,
   `asset_audio_embedding`, `asset_phenotype`, and `asset_semantic_ids` (the FSQ code tuple).
 - **Integrity:** every PK checked unique; every FK checked to resolve into its parent (no orphans).

@@ -25,7 +25,6 @@ This document outlines the architecture of VSEKAI’s recommendation and crowdso
 ### **Core Components**
 
 1. **PostgreSQL (Metadata Storage)**
-
    - **Purpose**: Stores structured metadata for all game content (items, users, authors) using RDF, JSON-LD, and XMP formats. This includes titles, descriptions, authorship, licenses, and semantic relationships (e.g., "item X is a variant of item Y").
    - **Key Features**:
      - UUIDs (Universally Unique Identifiers) as primary keys for all entities.
@@ -33,7 +32,6 @@ This document outlines the architecture of VSEKAI’s recommendation and crowdso
      - Denormalized fields (e.g., `author`, `genre`) for fast queries.
 
 2. **Elixir (Backend Orchestration)**
-
    - **Purpose**: Manages data validation, preprocessing, and API interactions.
    - **Key Features**:
      - Parses and validates RDF/JSON-LD metadata using libraries like `RDF.ex`.
@@ -41,7 +39,6 @@ This document outlines the architecture of VSEKAI’s recommendation and crowdso
      - Triggers nightly preprocessing jobs to prepare training data.
 
 3. **DuckDB (Analytics Engine)**
-
    - **Purpose**: Handles resource-intensive data transformations and analytics.
    - **Key Features**:
      - Directly queries PostgreSQL via extensions to flatten nested metadata into training-ready formats.
@@ -60,19 +57,16 @@ This document outlines the architecture of VSEKAI’s recommendation and crowdso
 ### **Data Flow**
 
 1. **Preprocessing (Nightly Batch Job)**
-
    - Elixir triggers a DuckDB job to:
      - Extract flattened metadata (e.g., `author_uuid`, `genre`) from PostgreSQL.
      - Precompute text/image/3D/audio embeddings using models like BERT or ResNet.
      - Generate training data (Parquet files) and trends (SQLite cache).
 
 2. **Model Training (Offline)**
-
    - Python scripts train recommendation models (e.g., PinSage) using DuckDB-preprocessed data.
    - Models are exported to ONNX/TorchScript for Godot compatibility.
 
 3. **Real-Time Recommendations**
-
    - When a user interacts with content, Godot:
      1. Logs the event (e.g., `user_uuid=abc clicked item_uuid=def`) to SQLite.
      2. Queries the ONNX model with the user’s session history and embeddings.
@@ -90,19 +84,16 @@ This document outlines the architecture of VSEKAI’s recommendation and crowdso
 ### **Key Design Principles**
 
 1. **KISS (Keep It Simple, Stupid)**
-
    - Avoid overengineering: No microservices, graph databases, or real-time pipelines.
    - Use familiar tools: PostgreSQL for transactions, SQLite for local caching, CSV/Parquet for training.
    - Precompute embeddings and trends to minimize runtime complexity.
 
 2. **UUID-Centric Relationships**
-
    - All entities (users, items, contributions) use UUIDs as primary keys.
    - Enables traceability without joins: Contributions link to users/items via UUIDs.
    - Decouples identifiers from mutable attributes (e.g., a user’s renamed item).
 
 3. **Separation of Concerns**
-
    - PostgreSQL: Source of truth for metadata and relationships.
    - DuckDB: Analytics and preprocessing (OLAP workloads).
    - Godot: Real-time inference and user interaction.
@@ -117,13 +108,11 @@ This document outlines the architecture of VSEKAI’s recommendation and crowdso
 ### **Example Workflows**
 
 1. **User Discovers an Item**
-
    - A user clicks a "Cyberpunk City" world thumbnail.
    - Godot fetches metadata (title, author) from PostgreSQL via Elixir APIs.
    - The ONNX model recommends similar items using session history and embeddings.
 
 2. **Creator Corrects a Rig**
-
    - A creator adjusts an auto-generated skeleton and clicks "Save Correction."
    - Godot uploads the corrected rig (`rig_<uuid>.tres`) to S3.
    - PostgreSQL logs the contribution, linking it to the creator’s `user_uuid`.

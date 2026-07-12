@@ -1,4 +1,3 @@
-
 ```
 get recommendations
     pipelineid: Identifier for the project/pipeline associated with the recommendations.

@@ -24,15 +24,15 @@ dictates how content is represented and where the body-phenotype feature attache
 
 ## Considered Options
 
-- **Egocentric u2i**: user-conditioned ranking; body phenotype as a *user* (avatar) feature.
-- **Allocentric i2i**: item-centric shared-space next-item generation; body phenotype as an *item*
+- **Egocentric u2i**: user-conditioned ranking; body phenotype as a _user_ (avatar) feature.
+- **Allocentric i2i**: item-centric shared-space next-item generation; body phenotype as an _item_
   feature; users represented by their session of interacted items.
 
 ## Decision Outcome
 
 Chosen: **allocentric, item-centric i2i**. Consequences for the pipeline:
 
-- **Paradigm.** Semantic-ID generator predicts the next *item* in a shared world-frame space; users
+- **Paradigm.** Semantic-ID generator predicts the next _item_ in a shared world-frame space; users
   are their session of items, not an ego-avatar vector.
 - **Body phenotype is an item feature** (humanoid/character assets), not a user feature. rf-detr
   yields 2D camera-relative (egocentric) keypoints; the fit recovers the **allocentric canonical

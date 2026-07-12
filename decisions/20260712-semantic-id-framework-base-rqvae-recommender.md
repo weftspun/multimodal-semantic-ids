@@ -27,7 +27,7 @@ Licenses below were verified against the actual repository LICENSE files on 2026
 - **`phonism/genrec`** — MIT, pure PyTorch, model zoo (SASRec/HSTU/TIGER/LCRec/COBRA/RPG), younger
   (~112★/28 commits), published benchmarks.
 - **`HKUDS/RecGPT`** — **ships no LICENSE → all-rights-reserved, not FOSS** (its FSQ tokenizer + GPT
-  decoder is a good *reference design*; base model is self-trained, no Llama dependency).
+  decoder is a good _reference design_; base model is self-trained, no Llama dependency).
 - **`RUCAIBox/LC-Rec`** — **no LICENSE + requires Meta LLaMA-7B non-commercial weights** → disqualified.
 - **Meta `facebookresearch/liger`** — majority **CC-BY-NC** (non-commercial) → disqualified (only its
   isolated `rqvae/` subfolder is Apache-2.0).
