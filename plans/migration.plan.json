@@ -1,49 +1,50 @@
 {
   "generated_by": "taskweft plan (HTN solve) + plain critical-path rollup (no minizinc)",
   "domain": "plans/migration.domain.jsonld",
+  "durations_calibrated": "2026-07-12 from git commit deltas (actual AI wall-clock)",
   "ordered_plan": [
     {
       "action": "a_p2_mesh_cuda_linux",
       "platform": "linux",
-      "hours": 4.0
+      "hours": 1.0
     },
     {
       "action": "a_p2_mesh_slang_linux",
       "platform": "linux",
-      "hours": 16.0
+      "hours": 4.0
     },
     {
       "action": "a_p2_mesh_slang_windows",
       "platform": "windows",
-      "hours": 2.0
+      "hours": 0.33
     },
     {
       "action": "a_p2_mesh_drop_cuda",
       "platform": "any",
-      "hours": 1.0
+      "hours": 0.17
     },
     {
       "action": "a_p2_encoders",
       "platform": "windows",
-      "hours": 8.0
+      "hours": 1.0
     },
     {
       "action": "a_p2_store",
       "platform": "any",
-      "hours": 3.0
+      "hours": 0.33
     },
     {
       "action": "a_p2_i2i",
       "platform": "any",
-      "hours": 4.0
+      "hours": 0.5
     },
     {
       "action": "a_p2_coldstart",
       "platform": "any",
-      "hours": 2.0
+      "hours": 0.25
     }
   ],
-  "sequential_hours": 40.0,
-  "critical_path_hours": 23.0,
-  "note": "mesh: CUDA fallback + Slang dev on LINUX; verify Slang on WINDOWS; then drop CUDA. This session is Windows-only, so linux-tagged steps run on a Linux host."
+  "sequential_hours": 7.58,
+  "critical_path_hours": 5.5,
+  "note": "mesh: CUDA fallback + Slang dev on LINUX (WSL2 FedoraLinux-44 available); verify Slang on WINDOWS; then drop CUDA."
 }

@@ -2,7 +2,7 @@
   "@context": {"vsekai": "https://v-sekai.org/", "domain": "vsekai:planning/domain/"},
   "@type": "domain:Definition",
   "name": "librecommender_to_foss_semantic_id_migration",
-  "description": "HTN decomposition of the LibRecommender -> FOSS semantic-ID generative-retrieval migration. done/* flags seed completed work; each action has an ISO8601 'duration' and a 'platform'. Mesh encoder: voxelize(win, done) -> CUDA fallback (linux) -> Slang+Lean4 reimpl (linux) -> verify Slang (windows) -> drop CUDA. See decisions/20260712-*.md.",
+  "description": "HTN decomposition of the LibRecommender -> FOSS semantic-ID generative-retrieval migration. done/* flags seed completed work; each action has an ISO8601 'duration' (calibrated 2026-07-12 to actual AI wall-clock from git commit deltas: code/decision tasks ~3-10m, GPU/download ~15m, deep integration/R&D higher) and a 'platform'. Mesh encoder: voxelize(win, done) -> CUDA fallback (linux/WSL2) -> Slang+Lean4 reimpl (linux) -> verify Slang (windows) -> drop CUDA. See decisions/20260712-*.md.",
   "variables": [
     {"name": "done", "init": {
       "madrs": true, "pixi": true, "pyproject": true, "taskweft_mcp": true,
@@ -21,15 +21,15 @@
     }}
   ],
   "actions": {
-    "a_p2_mesh_voxelize":     {"params": [], "duration": "PT4H",  "platform": "windows", "body": [{"set": "/done/p2_mesh_voxelize", "value": true}]},
-    "a_p2_mesh_cuda_linux":   {"params": [], "duration": "PT4H",  "platform": "linux",   "body": [{"check": "/done/p2_mesh_voxelize", "eq": true}, {"set": "/done/p2_mesh_cuda_linux", "value": true}]},
-    "a_p2_mesh_slang_linux":  {"params": [], "duration": "PT16H", "platform": "linux",   "body": [{"check": "/done/p2_mesh_cuda_linux", "eq": true}, {"set": "/done/p2_mesh_slang_linux", "value": true}]},
-    "a_p2_mesh_slang_windows":{"params": [], "duration": "PT2H",  "platform": "windows", "body": [{"check": "/done/p2_mesh_slang_linux", "eq": true}, {"set": "/done/p2_mesh_slang_windows", "value": true}]},
-    "a_p2_mesh_drop_cuda":    {"params": [], "duration": "PT1H",  "platform": "any",     "body": [{"check": "/done/p2_mesh_slang_windows", "eq": true}, {"set": "/done/p2_mesh_drop_cuda", "value": true}]},
-    "a_p2_encoders":          {"params": [], "duration": "PT8H",  "platform": "windows", "body": [{"set": "/done/p2_encoders", "value": true}]},
-    "a_p2_store":             {"params": [], "duration": "PT3H",  "platform": "any",     "body": [{"check": "/done/p2_encoders", "eq": true}, {"check": "/done/p2_mesh_cuda_linux", "eq": true}, {"set": "/done/p2_store", "value": true}]},
-    "a_p2_i2i":               {"params": [], "duration": "PT4H",  "platform": "any",     "body": [{"check": "/done/p2_store", "eq": true}, {"set": "/done/p2_i2i", "value": true}]},
-    "a_p2_coldstart":         {"params": [], "duration": "PT2H",  "platform": "any",     "body": [{"check": "/done/p2_i2i", "eq": true}, {"set": "/done/p2_coldstart", "value": true}]}
+    "a_p2_mesh_voxelize":     {"params": [], "duration": "PT10M", "platform": "windows", "body": [{"set": "/done/p2_mesh_voxelize", "value": true}]},
+    "a_p2_mesh_cuda_linux":   {"params": [], "duration": "PT1H",  "platform": "linux",   "body": [{"check": "/done/p2_mesh_voxelize", "eq": true}, {"set": "/done/p2_mesh_cuda_linux", "value": true}]},
+    "a_p2_mesh_slang_linux":  {"params": [], "duration": "PT4H",  "platform": "linux",   "body": [{"check": "/done/p2_mesh_cuda_linux", "eq": true}, {"set": "/done/p2_mesh_slang_linux", "value": true}]},
+    "a_p2_mesh_slang_windows":{"params": [], "duration": "PT20M", "platform": "windows", "body": [{"check": "/done/p2_mesh_slang_linux", "eq": true}, {"set": "/done/p2_mesh_slang_windows", "value": true}]},
+    "a_p2_mesh_drop_cuda":    {"params": [], "duration": "PT10M", "platform": "any",     "body": [{"check": "/done/p2_mesh_slang_windows", "eq": true}, {"set": "/done/p2_mesh_drop_cuda", "value": true}]},
+    "a_p2_encoders":          {"params": [], "duration": "PT1H",  "platform": "windows", "body": [{"set": "/done/p2_encoders", "value": true}]},
+    "a_p2_store":             {"params": [], "duration": "PT20M", "platform": "any",     "body": [{"check": "/done/p2_encoders", "eq": true}, {"check": "/done/p2_mesh_cuda_linux", "eq": true}, {"set": "/done/p2_store", "value": true}]},
+    "a_p2_i2i":               {"params": [], "duration": "PT30M", "platform": "any",     "body": [{"check": "/done/p2_store", "eq": true}, {"set": "/done/p2_i2i", "value": true}]},
+    "a_p2_coldstart":         {"params": [], "duration": "PT15M", "platform": "any",     "body": [{"check": "/done/p2_i2i", "eq": true}, {"set": "/done/p2_coldstart", "value": true}]}
   },
   "methods": {
     "m_p2_mesh_voxelize":     {"params": [], "alternatives": [{"name": "skip", "check": [{"pointer": "/done/p2_mesh_voxelize",     "eq": true}], "subtasks": []}, {"name": "do", "subtasks": [["a_p2_mesh_voxelize"]]}]},
