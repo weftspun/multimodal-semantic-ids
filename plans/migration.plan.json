@@ -2,24 +2,48 @@
   "generated_by": "taskweft plan (HTN solve) + plain critical-path rollup (no minizinc)",
   "domain": "plans/migration.domain.jsonld",
   "ordered_plan": [
-    "a_p2_mesh_cuda_encode",
-    "a_p2_mesh_slang_vae",
-    "a_p2_mesh_drop_cuda",
-    "a_p2_encoders",
-    "a_p2_store",
-    "a_p2_i2i",
-    "a_p2_coldstart"
+    {
+      "action": "a_p2_mesh_cuda_linux",
+      "platform": "linux",
+      "hours": 4.0
+    },
+    {
+      "action": "a_p2_mesh_slang_linux",
+      "platform": "linux",
+      "hours": 16.0
+    },
+    {
+      "action": "a_p2_mesh_slang_windows",
+      "platform": "windows",
+      "hours": 2.0
+    },
+    {
+      "action": "a_p2_mesh_drop_cuda",
+      "platform": "any",
+      "hours": 1.0
+    },
+    {
+      "action": "a_p2_encoders",
+      "platform": "windows",
+      "hours": 8.0
+    },
+    {
+      "action": "a_p2_store",
+      "platform": "any",
+      "hours": 3.0
+    },
+    {
+      "action": "a_p2_i2i",
+      "platform": "any",
+      "hours": 4.0
+    },
+    {
+      "action": "a_p2_coldstart",
+      "platform": "any",
+      "hours": 2.0
+    }
   ],
-  "durations_hours": {
-    "a_p2_mesh_cuda_encode": 4.0,
-    "a_p2_mesh_slang_vae": 16.0,
-    "a_p2_mesh_drop_cuda": 1.0,
-    "a_p2_encoders": 8.0,
-    "a_p2_store": 3.0,
-    "a_p2_i2i": 4.0,
-    "a_p2_coldstart": 2.0
-  },
-  "sequential_hours": 38.0,
-  "critical_path_hours": 17.0,
-  "note": "critical_path = min makespan with unlimited parallel workers; sequential = single worker."
+  "sequential_hours": 40.0,
+  "critical_path_hours": 23.0,
+  "note": "mesh: CUDA fallback + Slang dev on LINUX; verify Slang on WINDOWS; then drop CUDA. This session is Windows-only, so linux-tagged steps run on a Linux host."
 }

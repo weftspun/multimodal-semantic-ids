@@ -57,6 +57,13 @@ kernels are written and formally checked in Lean, then codegen'd to portable Sla
 - **Scope: encoder forward only.** Sparse ConvNeXt / ResBlock-S2C 3D convs + the VAE bottleneck →
   pooled SLAT vector. No decoder, no renderer.
 
+**Platform sequence.** The prebuilt Windows `flex_gemm` wheel ships only `kernels.cuda` (neighbor maps),
+NOT the triton GEMM kernels the sparse-conv forward needs — so the native CUDA encode cannot finish on
+Windows with the git wheels. Therefore: (1) get the **CUDA fallback working on Linux** (TRELLIS.2's native
+platform, complete `flex_gemm`) to produce a reference mesh→SLAT vector; (2) build the **Slang+Lean4
+encoder on Linux**, matched bit-close to that reference; (3) **verify the Slang path on Windows** (the
+whole point — portability); (4) **drop CUDA**. Voxelization (Stage 1) already runs on Windows FOSS-clean.
+
 ### Consequences
 
 - (+) Portable (Vulkan/CPU, in-Godot), no CUDA-extension DLLs, no torch/cu128 pinning; formally
