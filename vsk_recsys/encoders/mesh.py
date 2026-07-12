@@ -72,7 +72,82 @@ class MeshEncoder:
 
     def encode(self, meshes):  # -> np.ndarray (n, dim)
         raise NotImplementedError(
-            "Stage 2 (O-Voxel -> SLAT shape-VAE embedding -> pooled vector) is the remaining part of "
-            "planner action a_p2_mesh_encoder; needs the TRELLIS.2 shape encoder + 709 MB MIT weights. "
-            "Stage 1 voxelization is available via voxelize()/voxelize_trimesh()."
+            "Batch encode is per-catalog; use load_shape_encoder() + encode_to_slat() per mesh. "
+            "See scripts/mesh_encode_linux.py for the offline batch job."
         )
+
+
+def load_shape_encoder(weights_prefix: str, trellis2_path: str, device: str = "cuda"):
+    """Load the TRELLIS.2 FlexiDualGridVaeEncoder (MIT weights). Stage-2 mesh encoder.
+
+    VERIFIED on WSL2 Linux (torch 2.6/cu124, RTX 4090) with FlexGEMM + o-voxel built from source —
+    FlexGEMM-from-source has the triton GEMM kernels the Windows prebuilt wheel lacked. Sets the sparse
+    backends and stubs the decode/render-only libs (cumesh/nvdiffrast/cv2) the encoder never uses.
+    ``weights_prefix``: path prefix to ``{prefix}.json`` + ``{prefix}.safetensors``.
+    """
+    import os
+    import sys
+    import types
+
+    os.environ.setdefault("SPARSE_CONV_BACKEND", "flex_gemm")
+    os.environ.setdefault("SPARSE_ATTN_BACKEND", "xformers")
+    sys.path.insert(0, trellis2_path)
+    for n in ["cumesh", "nvdiffrast", "nvdiffrast.torch", "cv2", "nvdiffrec", "nvdiffrec_render"]:
+        sys.modules.setdefault(n, types.ModuleType(n))
+    import trellis2.models as models  # noqa: E402
+
+    return models.from_pretrained(weights_prefix).eval().to(device)
+
+
+def morton_order(coords):
+    """Argsort voxel coords into canonical Morton (Z-order) sequence — order of SLAT tokens matters.
+
+    A space-filling curve gives a deterministic AND spatially-coherent token order (nearby voxels stay
+    adjacent in the sequence), matching O-Voxel's own `serialize.encode_seq`. ``coords``: (N, 3) ints.
+    """
+    import torch
+
+    def spread(v):  # interleave: spread low 21 bits of v with 2 zero bits between each
+        v = v.long() & 0x1FFFFF
+        v = (v | (v << 32)) & 0x1F00000000FFFF
+        v = (v | (v << 16)) & 0x1F0000FF0000FF
+        v = (v | (v << 8)) & 0x100F00F00F00F00F
+        v = (v | (v << 4)) & 0x10C30C30C30C30C3
+        v = (v | (v << 2)) & 0x1249249249249249
+        return v
+
+    code = spread(coords[:, 0]) | (spread(coords[:, 1]) << 1) | (spread(coords[:, 2]) << 2)
+    return torch.argsort(code)
+
+
+def encode_to_slat(vertices, faces, encoder, grid_size: int = 64, device: str = "cuda"):
+    """Mesh -> O-Voxel -> **structured, Morton-ordered** SLAT. Returns ``(feats, coords)``, NOT pooled.
+
+    ``feats``: (N, C) — N structured SLAT tokens (one per active voxel), C latent channels (32 for the
+    shape VAE). ``coords``: (N, 3) — the voxel coordinates. **No mean/average pooling** — averaging would
+    destroy structure. Tokens are returned in **canonical Morton (Z-order)** so the sequence is
+    deterministic AND spatially coherent (order of SLAT tokens matters for the sequence model). Downstream,
+    each SLAT token is FSQ-quantized into a semantic code, so the mesh contributes an *ordered set* of
+    codes (like text/image). Deterministic: the VAE returns the posterior mean (``sample_posterior=False``,
+    ``.eval()``); repeated encodes diff = 0.0.
+    """
+    import torch
+
+    convert = load_voxelizer()
+    import trellis2.modules.sparse as sp
+
+    v = vertices.detach().to(torch.float32).cpu()
+    f = faces.detach().to(torch.int32).cpu()
+    mn, mx = v.min(0).values, v.max(0).values
+    pad = (mx - mn) / (grid_size - 1)
+    aabb = torch.stack([mn - pad * 0.5, mx + pad * 0.5], dim=0).float()
+    coords, dual, inter = convert.mesh_to_flexible_dual_grid(v, f, grid_size=grid_size, aabb=aabb)
+    cb = torch.cat([torch.zeros_like(coords[:, 0:1]), coords], dim=-1).int()
+    verts = sp.SparseTensor(dual.float(), cb)
+    inter_st = verts.replace(inter.float())
+    with torch.no_grad():
+        z = encoder(verts.to(device), inter_st.to(device))  # posterior mean; deterministic
+    feats = z.feats.float().cpu()
+    coords = z.coords[:, 1:].cpu()
+    order = morton_order(coords)  # canonical Z-order — SLAT token order matters
+    return feats[order], coords[order]  # (N, C) structured tokens + (N, 3) coords, Morton-ordered

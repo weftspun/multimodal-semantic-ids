@@ -47,8 +47,17 @@ Chosen per modality (rejected alternatives noted):
   FOSS-clean (icosphere 2562v/5120f → 18752 voxels; NO triton/nvdiffrast/cv2 — just MIT `o_voxel._C`).
   Two o_voxel quirks handled in `vsk_recsys/encoders/mesh.py`: (1) bypass the render-eager package
   `__init__`, import the voxelizer submodule directly; (2) pass `aabb` on CPU (their code `.cuda()`s aabb
-  but calls a `*_cpu` kernel). Remaining: Stage-2 shape-VAE embed (O-Voxel→SLAT→pool) needs the 709 MB
-  MIT shape encoder + `trellis2`. Isolated pixi `mesh` env (torch 2.8) added for this.
+  but calls a `*_cpu` kernel). **Stage-2 shape-VAE encode VERIFIED on WSL2 Fedora (torch 2.6/cu124, RTX
+  4090):** mesh → O-Voxel → `FlexiDualGridVaeEncoder` (709 MB MIT weights) → SLAT `(N, 32)`. Built
+  **FlexGEMM + o-voxel from source** — FlexGEMM-source ships the **triton GEMM kernels the Windows
+  prebuilt wheel lacked** (the exact wall on Windows). Two correctness points (raised in review):
+  (a) **deterministic** — the VAE encoder returns the posterior mean (`sample_posterior=False`, `.eval()`);
+  repeated encodes diff = 0.0, so same asset → same codes. (b) **NO mean/average pooling** — the SLAT is
+  a *structured* per-voxel latent; we keep the `(N, 32)` tokens + coords and **FSQ-quantize each token**
+  into mesh semantic codes downstream (a mesh contributes a *set* of codes, like text/image), preserving
+  geometry structure. **Geometry-only for now** (`shape_enc`); full SLAT = **shape ⊕ texture** — add
+  `tex_enc` (PBR/materials via the textured voxelization `textured_mesh_to_volumetric_attr`) for
+  appearance. Recipe in `vsk_recsys/encoders/mesh.py::encode_to_slat` + `scripts/mesh_encode_linux.py`.
 - **Audio**: **LAION-CLAP** (Apache-2.0) — shared text↔image↔audio space (cross-modal, not an acoustic
   silo). Rejected: **Microsoft msclap** (MS-PL — OSI but non-standard/copyleft-ish).
 - **Body phenotype** (an **item** feature for humanoid/character assets): **rf-detr** 2D COCO keypoints

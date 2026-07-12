@@ -10,7 +10,7 @@
       "p1_data": true, "p1_fsq": true, "p1_decoder": true, "p1_train": true, "p1_eval": true, "p1_parity": true,
       "p2_nvdiffrast_gate": true, "p2_datasets": true, "p2_godot_scene_text": true,
       "p2_mesh_voxelize": true,
-      "p2_mesh_cuda_linux": false,
+      "p2_mesh_cuda_linux": true,
       "p2_mesh_slang_linux": false,
       "p2_mesh_slang_windows": false,
       "p2_mesh_drop_cuda": false,
