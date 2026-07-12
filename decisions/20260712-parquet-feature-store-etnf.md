@@ -38,6 +38,15 @@ Chosen: **ETNF-decomposed parquet lake**, one relation per file:
 - **Many-to-many facts = all-key junctions:** `session_assets (session_uuid, asset_uuid)`,
   `item_graph (source_uuid, target_uuid, cooccurrence_type)`, `user_item_edges (user_uuid, asset_uuid,
 interaction_type)` — the entire heading is the key.
+- **Real user→item source = V-Sekai `uro` backpacks** (`V-Sekai/uro`, `benbot/backpack-inventory`,
+  `Uro.Inventory.Backpack`). Mapping to ETNF: `backpacks.owner_id` → **`users`**; `Map`/`Avatar`/`Prop`
+  (`UserContent`) → **`assets`** (`kind` = map|avatar|prop; Avatars feed the mesh+phenotype encoders);
+  `backpack_join` rows (owner + item + **timestamp**) → **`user_item_edges`** (the interaction junction,
+  `interaction_type=owns`) and a per-user **`sessions`** row (a backpack = a user's timestamped item set =
+  a session / "basket"). Timestamps give the temporal order the sequential decoder wants. There is **no
+  "category"** relation — items are typed content, not user categories. The Godot `project=session` proxy
+  ([20260712-phase2-foss-datasets]) is the bootstrap until backpack data lands; swapping in uro is a
+  data-source change, not a schema change.
 - **Derived-extension relations keyed by `asset_uuid`** — one relation _per modality_, each written by its
   own offline encoder job:
   - **1:1** — `asset_text_embedding` and `asset_image_embedding` (both from the single unified

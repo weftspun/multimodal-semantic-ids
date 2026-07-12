@@ -39,11 +39,16 @@ prefer the CC-BY image/audio alternatives.
 
 - (+) Every modality has genuine, license-clean data; TRELLIS-500K alone covers mesh+image+text.
 - (+) Re-pointing to real Godot assets later is a data-source swap, not a code change (ETNF lake).
-- (+) **`godot-demo-projects` gives real item→item structure without fabricating interactions:**
-  **items = individual `.tscn` scenes; sessions = projects** (the scenes co-occurring in one project are
-  used together). This is the cleanest session signal available and largely resolves the interaction-data
-  gap for the Godot text corpus — no synthetic co-occurrence walks needed. Wire this in `a_p2_i2i`.
-- (-) The 3D/audio/body datasets still lack sessions; if their catalogs are mixed in, fall back to
-  content-similarity co-occurrence for those items. The Godot corpus is small (~394 scenes) — fine for a
-  proof-of-stack + cold-start demo, not large-scale training.
+- (+) **`godot-demo-projects` gives real item→item structure without fabricating interactions** — a
+  **bootstrap proxy**: **items = `.tscn` scenes; sessions = projects** (scenes co-occurring in one project).
+  Cleanest public session signal; no synthetic co-occurrence walks. Wire in `a_p2_i2i`.
+- (+) **The REAL user→item source is V-Sekai's `uro` `Inventory.Backpack`** (`V-Sekai/uro`,
+  `benbot/backpack-inventory`): a **backpack = a user's timestamped set of owned items** = a session /
+  "basket". We call these **backpacks** (V-Sekai's term); there is **no "category"** concept (items are
+  *typed* Map / Avatar / Prop, i.e. content types, not user categories). Backpacks are the genuine
+  interaction/ownership graph and supersede the Godot proxy once available — see the uro→ETNF mapping in
+  [20260712-parquet-feature-store-etnf].
+- (-) The 3D/audio/body datasets still lack sessions; if mixed in, fall back to content-similarity
+  co-occurrence. The Godot proxy corpus is small (~394 scenes) — fine for a proof-of-stack + cold-start
+  demo, not large-scale training (real scale comes from uro backpacks).
 - ODC-BY / per-object Objaverse licenses require attribution and per-object filtering for redistribution.
