@@ -1,0 +1,139 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+title: "vsk-session-item-recommendation: FOSS semantic-ID generative retrieval for session-based Godot asset recommendation"
+abstract: >-
+  A pure-PyTorch, FOSS (Apache-2.0 / MIT) session-based item recommender for user-generated Godot
+  scene/assets. Items are encoded from multimodal content (scene/XMP text, image, mesh, audio, and a
+  canonical body phenotype for humanoid assets) and quantized into discrete semantic IDs with Finite
+  Scalar Quantization; a Transformer generates the next item's IDs. The design is allocentric and
+  item-centric (i2i), giving cold-start / new-item churn robustness for a UGC catalog. This work
+  migrates the recommender off the TensorFlow-based LibRecommender / PinSage baseline.
+authors:
+  - family-names: Lee
+    given-names: "K. S. Ernest (iFire)"
+    email: ernest.lee@chibifire.com
+version: 0.1.0-dev.1
+date-released: "2026-07-12"
+license: MIT
+repository-code: "https://github.com/V-Sekai-fire/vsk-session-item-recommendation-01"
+keywords:
+  - recommender-systems
+  - generative-retrieval
+  - semantic-ids
+  - finite-scalar-quantization
+  - session-based-recommendation
+  - multimodal
+  - cold-start
+  - godot
+  - v-sekai
+
+references:
+  # --- Methods / papers ---
+  - type: conference-paper
+    title: "Recommender Systems with Generative Retrieval (TIGER)"
+    authors:
+      - name: "Rajput, S. et al."
+    year: 2023
+    url: "https://arxiv.org/abs/2305.05065"
+  - type: conference-paper
+    title: "Finite Scalar Quantization: VQ-VAE Made Simple (FSQ)"
+    authors:
+      - name: "Mentzer, F. et al."
+    year: 2023
+    url: "https://arxiv.org/abs/2309.15505"
+  - type: conference-paper
+    title: "Actions Speak Louder than Words: Trillion-Parameter Sequential Transducers for Generative Recommendations (HSTU)"
+    authors:
+      - name: "Zhai, J. et al."
+    year: 2024
+    url: "https://arxiv.org/abs/2402.17152"
+  - type: conference-paper
+    title: "EAGER: Two-Stream Generative Recommender with Behavior-Semantic Collaboration"
+    authors:
+      - name: "Wang, Y. et al."
+    year: 2024
+    url: "https://arxiv.org/abs/2406.14017"
+  - type: article
+    title: "Qwen3-VL Technical Report"
+    authors:
+      - name: "Qwen Team, Alibaba Cloud"
+    year: 2025
+    url: "https://arxiv.org/abs/2511.21631"
+  - type: article
+    title: "On the Scaling of Semantic-ID-based Generative Recommendation"
+    authors:
+      - name: "Anonymous (KDD 2026)"
+    year: 2025
+    url: "https://arxiv.org/abs/2509.25522"
+
+  # --- Software / models depended on (all FOSS: Apache-2.0 / MIT) ---
+  - type: software
+    title: "RQ-VAE-Recommender: PyTorch generative retrieval with semantic IDs (TIGER)"
+    authors:
+      - name: "Botta, Edoardo"
+    year: 2025
+    url: "https://github.com/EdoardoBotta/RQ-VAE-Recommender"
+    license: MIT
+  - type: software
+    title: "GenRec: A Model Zoo for Generative Recommendation"
+    authors:
+      - name: "Lu, Qi"
+    year: 2025
+    url: "https://github.com/phonism/genrec"
+    license: MIT
+  - type: software
+    title: "vector-quantize-pytorch (FSQ / ResidualFSQ)"
+    authors:
+      - name: "Wang, Phil (lucidrains)"
+    year: 2026
+    url: "https://github.com/lucidrains/vector-quantize-pytorch"
+    license: MIT
+  - type: software
+    title: "TRELLIS.2: image-to-3D with structured latents (SLAT)"
+    authors:
+      - name: "Microsoft"
+    year: 2026
+    url: "https://github.com/microsoft/TRELLIS.2"
+    license: MIT
+  - type: software
+    title: "Qwen3-VL-Embedding: multimodal embeddings (SigLIP-2 vision tower)"
+    authors:
+      - name: "Qwen Team, Alibaba Cloud"
+    year: 2026
+    url: "https://github.com/QwenLM/Qwen3-VL-Embedding"
+    license: Apache-2.0
+  - type: software
+    title: "CLAP: Contrastive Language-Audio Pretraining"
+    authors:
+      - name: "LAION-AI"
+    year: 2023
+    url: "https://github.com/LAION-AI/CLAP"
+    license: Apache-2.0
+  - type: software
+    title: "RF-DETR: real-time transformer detection with keypoints"
+    authors:
+      - name: "Roboflow"
+    year: 2025
+    url: "https://github.com/roboflow/rf-detr"
+    license: Apache-2.0
+  - type: software
+    title: "SOMA-X: unified parametric human body models (incl. ANNY)"
+    authors:
+      - name: "NVlabs"
+    year: 2026
+    url: "https://github.com/NVlabs/SOMA-X"
+    license: Apache-2.0
+  - type: software
+    title: "ModernBERT"
+    authors:
+      - name: "Warner, B. et al."
+    year: 2024
+    url: "https://github.com/AnswerDotAI/ModernBERT"
+    license: Apache-2.0
+  - type: software
+    title: "LibRecommender (migrated off — TensorFlow PinSage baseline)"
+    authors:
+      - name: "Peng, Massquantity"
+    year: 2020
+    url: "https://github.com/massquantity/LibRecommender"
+    license: MIT
