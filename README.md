@@ -1,4 +1,4 @@
-# Session-based Item Recommendation (V-Sekai)
+# Session-based Item Recommendation
 
 A semantic-ID generative-retrieval recommender for
 session-based recommendation of user-generated Godot scene/assets. Items are encoded from their
@@ -16,14 +16,11 @@ pixi run phase1           # MovieLens parity (WIP)
 ```
 
 The stdlib-only modules (`vsk_recsys.data.etnf`, `vsk_recsys.eval.metrics`) also run under a bare
-Python 3.11 without the ML stack:
+Python 3.11:
 
 ```bash
 python -m tests.test_etnf && python -m tests.test_metrics
 ```
-
-Phase 2 heavy encoders (TRELLIS.2, Qwen3-VL-Embedding, LAION-CLAP, rf-detr) are Linux + CUDA and are
-installed separately from the light, cross-platform Phase 1 env.
 
 ## Status
 
