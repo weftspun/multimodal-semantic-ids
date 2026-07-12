@@ -15,7 +15,7 @@
       "crossrepo": true,
       "p1_data": true,
       "p1_fsq": true,
-      "p1_decoder": false,
+      "p1_decoder": true,
       "p1_train": false,
       "p1_eval": false,
       "p1_parity": false,
