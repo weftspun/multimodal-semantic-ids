@@ -155,6 +155,57 @@ def encode_to_slat(vertices, faces, encoder, grid_size: int = 64, device: str = 
 load_texture_encoder = load_shape_encoder
 
 
+def _nearest_pot(n: int) -> int:
+    """Nearest power of two to ``n`` (the O-Voxel `_C` texture kernel needs square POT textures)."""
+    if n < 1:
+        return 1
+    lo = 1 << (n.bit_length() - 1)
+    hi = lo << 1
+    return lo if (n - lo) < (hi - n) else hi
+
+
+def _to_square_pot(img):
+    """Resample a PIL image to a square nearest-power-of-two — the industry-standard NPOT→POT fix.
+
+    This is the "scale to power of two" every texture pipeline uses (Unity ``NPOTScale=ToNearest``,
+    Unreal, NVIDIA Texture Tools, DirectXTex): **resample the whole image** to a POT size with a
+    high-quality filter. UVs are normalized [0,1] over the image, so a uniform resize preserves the
+    UV↔texel mapping exactly — unlike cropping/cover, which discards texels the UVs still reference.
+    O-Voxel's ``_C`` kernel requires width == height == POT, so we target ``(s, s)``; Lanczos is the
+    best-quality resampler for both up- and down-scaling.
+    """
+    from PIL import Image
+
+    w, h = img.size
+    s = _nearest_pot(max(w, h))  # ToNearest, unified to a square as the kernel requires
+    return img if (w, h) == (s, s) else img.resize((s, s), Image.LANCZOS)
+
+
+def normalize_pbr_geometry(g):
+    """Coerce a trimesh geometry into the ``TextureVisuals`` + ``PBRMaterial`` + square-POT-texture form
+    O-Voxel's textured sampler requires — so vertex-colored / SimpleMaterial / non-POT meshes still get
+    texture SLAT instead of falling back to shape-only. All conversions are native trimesh (no new deps):
+      - ``ColorVisuals`` (vertex colors) -> ``to_texture()`` bakes them into a base-color texture;
+      - ``SimpleMaterial`` (e.g. ``.obj``) -> ``.to_pbr()`` maps diffuse -> baseColor;
+      - non-square / non-POT PBR textures -> resized to the nearest square POT.
+    """
+    import trimesh.visual as V
+
+    vis = getattr(g, "visual", None)
+    if isinstance(vis, V.color.ColorVisuals):  # vertex colors -> baked texture
+        g.visual = vis.to_texture()
+        vis = g.visual
+    if isinstance(vis, V.TextureVisuals) and not isinstance(vis.material, V.material.PBRMaterial):
+        vis.material = vis.material.to_pbr()  # SimpleMaterial -> PBRMaterial
+    mat = getattr(vis, "material", None)
+    if isinstance(mat, V.material.PBRMaterial):
+        for attr in ("baseColorTexture", "metallicRoughnessTexture", "emissiveTexture", "normalTexture"):
+            img = getattr(mat, attr, None)
+            if img is not None:
+                setattr(mat, attr, _to_square_pot(img))
+    return g
+
+
 def encode_texture_to_slat(asset, tex_encoder, grid_size: int = 64, device: str = "cuda"):
     """Textured mesh -> PBR volumetric attrs -> **structured, Hilbert-ordered** TEXTURE SLAT.
 
@@ -162,15 +213,28 @@ def encode_texture_to_slat(asset, tex_encoder, grid_size: int = 64, device: str 
     ``textured_mesh_to_volumetric_attr`` to sample per-voxel PBR = ``[base_color(3), metallic, roughness,
     alpha]`` (6 channels, normalized to [-1, 1]), then the ``SparseUnetVaeEncoder`` (`tex_enc`). Returns
     ``(feats, coords)`` — (N, 32) structured texture tokens + coords, Hilbert-ordered, no pooling. The full
-    mesh representation is the shape tokens ⊕ these texture tokens.
+    mesh representation is the shape tokens ⊕ these texture tokens. Geometries are normalized to PBR first
+    (``normalize_pbr_geometry``) so vertex-colored / SimpleMaterial / non-POT meshes still yield texture.
     """
     import torch
+    import trimesh
 
     convert = load_voxelizer()
     import trellis2.modules.sparse as sp
 
+    # Normalize each geometry to PBR IN PLACE (keeps the scene graph/transforms intact).
+    geoms = asset.geometry.values() if isinstance(asset, trimesh.Scene) else [asset]
+    for g in geoms:
+        normalize_pbr_geometry(g)
+
+    # Match the shape path's grid frame: derive the aabb from the mesh's own (post-transform) bounds
+    # padded by half a voxel — NOT a hardcoded unit cube (which zeroed out any mesh outside [-0.5,0.5]).
+    b = torch.as_tensor(asset.bounds, dtype=torch.float32)  # (2, 3) min/max, matches to_mesh()
+    pad = (b[1] - b[0]) / (grid_size - 1)
+    aabb = torch.stack([b[0] - pad * 0.5, b[1] + pad * 0.5], dim=0).tolist()
+
     voxel_indices, attributes = convert.textured_mesh_to_volumetric_attr(
-        asset, grid_size=grid_size, aabb=[[-0.5, -0.5, -0.5], [0.5, 0.5, 0.5]]
+        asset, grid_size=grid_size, aabb=aabb
     )
     parts = []
     for k in ("base_color", "metallic", "roughness", "alpha"):
