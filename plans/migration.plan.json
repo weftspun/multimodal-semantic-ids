@@ -1,49 +1,20 @@
 {
-  "generated_by": "taskweft plan (HTN solve) + critical-path rollup (no minizinc)",
+  "generated_by": "taskweft plan (HTN solve) over migration.domain.jsonld; done/* seeded through mesh encode",
   "domain": "plans/migration.domain.jsonld",
+  "note": "Modality-first pivot: enc_text + enc_mesh done on real Godot content. i2i sequenced AFTER uro_backpack (Godot project=session too sparse, ~2.9 scenes/project). Milestone B decode = the Slang encoder's inverse (Slang mesh rasterizer).",
   "ordered_plan": [
-    {
-      "action": "a_p2_encoders",
-      "platform": "windows",
-      "hours": 1.0
-    },
-    {
-      "action": "a_p2_store",
-      "platform": "any",
-      "hours": 0.33
-    },
-    {
-      "action": "a_p2_i2i",
-      "platform": "any",
-      "hours": 0.5
-    },
-    {
-      "action": "a_p2_coldstart",
-      "platform": "any",
-      "hours": 0.25
-    },
-    {
-      "action": "a_p2_uro_backpack",
-      "platform": "any",
-      "hours": 1.0
-    },
-    {
-      "action": "a_p2_mesh_slang_linux",
-      "platform": "linux",
-      "hours": 4.0
-    },
-    {
-      "action": "a_p2_mesh_slang_windows",
-      "platform": "windows",
-      "hours": 0.33
-    },
-    {
-      "action": "a_p2_mesh_drop_cuda",
-      "platform": "any",
-      "hours": 0.17
-    }
+    {"action": "a_p2_enc_image",          "platform": "windows", "hours": 0.5,  "milestone": "A"},
+    {"action": "a_p2_enc_phenotype",      "platform": "windows", "hours": 1.0,  "milestone": "A"},
+    {"action": "a_p2_encoders",           "platform": "any",     "hours": 0.17, "milestone": "A"},
+    {"action": "a_p2_store",              "platform": "any",     "hours": 0.33, "milestone": "A"},
+    {"action": "a_p2_uro_backpack",       "platform": "any",     "hours": 1.0,  "milestone": "A"},
+    {"action": "a_p2_i2i",                "platform": "any",     "hours": 0.5,  "milestone": "A"},
+    {"action": "a_p2_coldstart",          "platform": "any",     "hours": 0.25, "milestone": "A"},
+    {"action": "a_p2_mesh_slang_linux",   "platform": "linux",   "hours": 4.0,  "milestone": "B"},
+    {"action": "a_p2_mesh_decode_foss",   "platform": "linux",   "hours": 3.0,  "milestone": "B"},
+    {"action": "a_p2_mesh_slang_windows", "platform": "windows", "hours": 0.33, "milestone": "B"},
+    {"action": "a_p2_mesh_drop_cuda",     "platform": "any",     "hours": 0.17, "milestone": "B"}
   ],
-  "sequential_hours": 7.58,
-  "critical_path_hours": 4.5,
-  "note": "Data: godot-demo-projects project=session BOOTSTRAP proxy -> then a_p2_uro_backpack wires the REAL user->item source (Uro.Inventory.Backpack: owner->users, Map/Avatar/Prop->assets, backpack_join+timestamp->user_item_edges+sessions). Milestone A (recommender) before B (Slang -> drop CUDA)."
+  "sequential_hours": 11.25,
+  "critical_path_hours": 11.25
 }
