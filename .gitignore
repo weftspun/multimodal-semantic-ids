@@ -178,3 +178,4 @@ ml-20m.zip
 
 # taskweft HTN planner binary (self-contained, 24MB) — do not commit
 tools/
+data/
