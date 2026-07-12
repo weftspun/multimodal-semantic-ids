@@ -12,7 +12,7 @@
     {"action": "a_p2_mesh_drop_cuda",     "platform": "any",     "hours": 0.17, "milestone": "B"}
   ],
   "deferred": [
-    {"action": "a_p2_enc_phenotype", "blocked_on": "../anny_litert ANNY body model absent on disk; rf-detr is detection-only (needs a pose model for COCO keypoints)"},
+    {"action": "a_p2_enc_phenotype", "note": "Not blocked -- both halves FOSS: keypoints = rf-detr RFDETRKeypointPreview (Apache-2.0, COCO person keypoints); forward+solve = sinew-mocap/solve (MIT, Lean->Slang ANNY, replaces NVIDIA SOMA-X). Remaining: clone sinew-mocap/solve + vkc_core, wire keypoint->ANNY bone-length fit."},
     {"action": "a_p2_enc_audio", "note": "Godot scenes rarely carry audio; LAION-CLAP stub only"}
   ],
   "critical_path_hours": 9.25
