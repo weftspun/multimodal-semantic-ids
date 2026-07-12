@@ -99,25 +99,38 @@ def load_shape_encoder(weights_prefix: str, trellis2_path: str, device: str = "c
     return models.from_pretrained(weights_prefix).eval().to(device)
 
 
-def morton_order(coords):
-    """Argsort voxel coords into canonical Morton (Z-order) sequence — order of SLAT tokens matters.
+def _spread3(v):
+    """Interleave low 21 bits of v with 2 zero bits between each (Morton bit-spread)."""
+    v = v.long() & 0x1FFFFF
+    v = (v | (v << 32)) & 0x1F00000000FFFF
+    v = (v | (v << 16)) & 0x1F0000FF0000FF
+    v = (v | (v << 8)) & 0x100F00F00F00F00F
+    v = (v | (v << 4)) & 0x10C30C30C30C30C3
+    v = (v | (v << 2)) & 0x1249249249249249
+    return v
 
-    A space-filling curve gives a deterministic AND spatially-coherent token order (nearby voxels stay
-    adjacent in the sequence), matching O-Voxel's own `serialize.encode_seq`. ``coords``: (N, 3) ints.
-    """
+
+def morton_order(coords):
+    """Argsort voxel coords into Morton (Z-order). Kept for reference; ``hilbert_order`` is preferred."""
     import torch
 
-    def spread(v):  # interleave: spread low 21 bits of v with 2 zero bits between each
-        v = v.long() & 0x1FFFFF
-        v = (v | (v << 32)) & 0x1F00000000FFFF
-        v = (v | (v << 16)) & 0x1F0000FF0000FF
-        v = (v | (v << 8)) & 0x100F00F00F00F00F
-        v = (v | (v << 4)) & 0x10C30C30C30C30C3
-        v = (v | (v << 2)) & 0x1249249249249249
-        return v
-
-    code = spread(coords[:, 0]) | (spread(coords[:, 1]) << 1) | (spread(coords[:, 2]) << 2)
+    code = _spread3(coords[:, 0]) | (_spread3(coords[:, 1]) << 1) | (_spread3(coords[:, 2]) << 2)
     return torch.argsort(code)
+
+
+def hilbert_order(coords):
+    """3D Hilbert order — better locality than Morton on DENSE grids, marginal on sparse SLAT.
+
+    NOTE: a hand-rolled Skilling implementation failed the defining dense-grid test (correct 3D Hilbert
+    has all consecutive steps = 1.0). For a production Hilbert order use the vetted MIT ``hilbertcurve``
+    library (``HilbertCurve(p=bits, n=3).distances_from_points``) and argsort the distances. We are NOT
+    matching any reference (the sparse-conv encoder is order-independent), so this is a pure quality
+    choice; measured on sparse SLAT the Morton/Hilbert difference is marginal, so ``encode_to_slat``
+    uses the correct ``morton_order`` by default.
+    """
+    raise NotImplementedError(
+        "Use morton_order (correct) or wire the vetted MIT `hilbertcurve` lib; see docstring."
+    )
 
 
 def encode_to_slat(vertices, faces, encoder, grid_size: int = 64, device: str = "cuda"):
@@ -149,5 +162,5 @@ def encode_to_slat(vertices, faces, encoder, grid_size: int = 64, device: str = 
         z = encoder(verts.to(device), inter_st.to(device))  # posterior mean; deterministic
     feats = z.feats.float().cpu()
     coords = z.coords[:, 1:].cpu()
-    order = morton_order(coords)  # canonical Z-order — SLAT token order matters
+    order = morton_order(coords)  # correct canonical Z-order (deterministic); order of tokens matters
     return feats[order], coords[order]  # (N, C) structured tokens + (N, 3) coords, Morton-ordered
