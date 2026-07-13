@@ -3,13 +3,17 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "vsk-recsys"
+name = "multimodal-semantic-ids"
 version = "0.1.0"
-description = "FOSS semantic-ID generative retrieval for session-based Godot asset recommendation"
+description = "Multimodal FOSS encoders + concat-vector ResidualFSQ semantic IDs (text/image/mesh/audio/body-phenotype)"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"
 authors = [{ name = "K. S. Ernest (iFire) Lee", email = "ernest.lee@chibifire.com" }]
+dependencies = [
+    # FSQ kernel + mesh SLAT pooling live canonically in slat-semantic-ids (one source of truth).
+    "slat-semantic-ids @ git+https://github.com/weftspun/slat-semantic-ids.git",
+]
 
 [tool.setuptools.packages.find]
 include = ["vsk_recsys*"]

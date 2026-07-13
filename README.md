@@ -1,10 +1,21 @@
-# Session-based Item Recommendation
+# multimodal-semantic-ids
 
-A semantic-ID generative-retrieval recommender for
-session-based recommendation of user-generated Godot scene/assets. Items are encoded from their
-content into discrete semantic IDs with Finite Scalar Quantization (FSQ), and a Transformer
-generates the next item's IDs. Because IDs are content-derived, brand-new assets are recommendable at
-inference — fixing cold-start for a churning UGC catalog.
+Multimodal FOSS encoders + a **concat-vector → ResidualFSQ** semantic-ID pipeline for session-based
+generative retrieval of user-generated Godot scene/assets. Each modality — **text + image**
+(Qwen3-VL-Embedding), **mesh/3D** (TRELLIS.2 SLAT), **audio** (LAION-CLAP), and **body phenotype**
+(rf-detr + ANNY) — is encoded to one vector; the present modalities are concatenated and quantized by a
+single ResidualFSQ into a per-asset semantic ID, and a Transformer generates the next item's IDs. Because
+IDs are content-derived, brand-new assets are recommendable at inference — fixing cold-start for a
+churning UGC catalog.
+
+The covering rule (each modality → one vector, concat, one ResidualFSQ) is specified in
+[`decisions/20260713-multimodal-residual-fsq-semantic-ids.md`](decisions/20260713-multimodal-residual-fsq-semantic-ids.md).
+
+**Lineage / related repos** (one source of truth each):
+- Successor to `weftspun/vsk-session-item-recommendation-01` (archived) — full history preserved here.
+- Mesh/3D FSQ kernel + SLAT pooling: [`slat-semantic-ids`](https://github.com/weftspun/slat-semantic-ids)
+  (render-free retrieval) — imported, not duplicated.
+- 3D generation (render aux-loss): [`trellis-slat-fsq`](https://github.com/weftspun/trellis-slat-fsq).
 
 ## Environment (pixi)
 

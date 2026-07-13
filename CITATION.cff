@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this work, please cite it as below."
-title: "vsk-session-item-recommendation: FOSS semantic-ID generative retrieval for session-based Godot asset recommendation"
+title: "multimodal-semantic-ids: FOSS multimodal encoders + concat-vector ResidualFSQ semantic IDs for session-based Godot asset recommendation"
 abstract: >-
   A pure-PyTorch, FOSS (Apache-2.0 / MIT) session-based item recommender for user-generated Godot
   scene/assets. Items are encoded from multimodal content (scene/XMP text, image, mesh, audio, and a
@@ -15,7 +15,7 @@ authors:
 version: 0.1.0-dev.1
 date-released: "2026-07-12"
 license: MIT
-repository-code: "https://github.com/V-Sekai-fire/vsk-session-item-recommendation-01"
+repository-code: "https://github.com/weftspun/multimodal-semantic-ids"
 keywords:
   - recommender-systems
   - generative-retrieval

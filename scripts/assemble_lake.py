@@ -24,6 +24,8 @@ FEATURE_RELATIONS = (
     "asset_image_embedding",
     "asset_mesh_shape_slat",
     "asset_mesh_texture_slat",
+    "asset_audio_clap",
+    "asset_body_phenotype",
 )
 
 
@@ -67,6 +69,8 @@ def report_coverage(lake: Path) -> None:
         ("text_embedding", "text"),
         ("image_embedding", "image"),
         ("slat_feats", "mesh"),  # both shape + texture expose slat_feats; DuckDB suffixes the dup
+        ("audio_embedding", "audio"),
+        ("phenotype_params", "phenotype"),
     ):
         try:
             n = con.execute(

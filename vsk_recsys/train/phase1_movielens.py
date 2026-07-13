@@ -20,7 +20,7 @@ import torch
 from vsk_recsys.data.movielens import load
 from vsk_recsys.eval.metrics import mrr_at_k, recall_at_k
 from vsk_recsys.model.decoder import SemanticIDDecoder, build_trie
-from vsk_recsys.quantizer.tokenizer import SemanticIDTokenizer, collision_rate
+from vsk_recsys.quantizer import SemanticIDTokenizer, collision_rate
 
 
 def _item_index(sessions_train, sessions_test):

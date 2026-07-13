@@ -58,10 +58,12 @@ Chosen per modality (rejected alternatives noted):
   **FlexGEMM + o-voxel from source** — FlexGEMM-source ships the **triton GEMM kernels the Windows
   prebuilt wheel lacked** (the exact wall on Windows). Two correctness points (raised in review):
   (a) **deterministic** — the VAE encoder returns the posterior mean (`sample_posterior=False`, `.eval()`);
-  repeated encodes diff = 0.0, so same asset → same codes. (b) **NO mean/average pooling** — the SLAT is
-  a *structured* per-voxel latent; we keep the `(N, 32)` tokens + coords and **FSQ-quantize each token**
-  into mesh semantic codes downstream (a mesh contributes an *ordered set* of codes, like text/image),
-  preserving structure. (c) **token order matters** — ordered by O-Voxel's **vetted** `serialize.encode_seq(
+  repeated encodes diff = 0.0, so same asset → same codes. (b) the SLAT is a *structured* per-voxel
+  latent; we keep the `(N, 32)` tokens + coords so structure survives for generation. For the **semantic
+  ID**, the mesh block is **mean-pooled to one vector** and concatenated with the other modalities per
+  [20260713-multimodal-residual-fsq-semantic-ids] (concat → one `ResidualFSQ`); the pooling and FSQ kernel
+  are reused from `slat-semantic-ids`. (c) **token order matters** for the structured latent — ordered by
+  O-Voxel's **vetted** `serialize.encode_seq(
   mode="hilbert")` `_C` kernel (verified true Hilbert: all consecutive steps = 1.0 on a dense grid, vs
   z-order 1.44/max-jump 9.95). Not matching any reference (sparse-conv encoder is order-independent), so
   Hilbert chosen for locality; a hand-rolled Hilbert was buggy → always use O-Voxel's `_C`. (d) **full
@@ -78,7 +80,9 @@ Chosen per modality (rejected alternatives noted):
   rf-detr **XL/2XL / `rfdetr_plus`** (Roboflow PML, not Apache); **SMPL / SMPL-X** body files (non-
   commercial license) — ANNY chosen precisely to avoid them.
 
-Fused modality vector → `ResidualFSQ` → per-asset semantic ID.
+Per-asset semantic ID: each modality → one vector, concatenated → a single `ResidualFSQ`. The exact rule
+(fixed slot layout, zero-fill for absent modalities, standardization) is specified canonically in
+[20260713-multimodal-residual-fsq-semantic-ids] — the source of truth for how modalities become IDs.
 
 ### Consequences
 
