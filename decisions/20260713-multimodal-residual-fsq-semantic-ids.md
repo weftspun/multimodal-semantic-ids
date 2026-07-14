@@ -6,6 +6,12 @@ tier: baseline
 decision-makers: K. S. Ernest (iFire) Lee
 ---
 
+> **Amended 2026-07-14:** `num_quantizers` moves 3 → 4 to match the certified 4-token contract of the
+> consuming recommender, and the **mesh** slot's mean-pool + direct-FSQ is superseded by a two-stage
+> inverse-rendering-corrected ResidualFSQ-VAE — see
+> [20260714-inverse-rendering-residual-fsq-vae-for-mesh-ids]. The fused-concat rule below still holds
+> for the non-renderable modalities.
+
 ## Context and Problem Statement
 
 [20260712-multimodal-foss-encoder-stack] gives each modality its own FOSS encoder writing an independent
